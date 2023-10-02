@@ -41,6 +41,8 @@ namespace UI
     float cameraPositionX = 0, cameraPositionY = -1, cameraPositionZ = -5;
     float cameraRotationX = 0, cameraRotationY = 0;
 
+    bool enableFlyControl = false;
+
     bool CreateUI()
     {
         mainWindowClass =
@@ -130,9 +132,9 @@ namespace UI
         }
 
         {
-            glTranslatef(cameraPositionX * 1000, cameraPositionY * 1000, cameraPositionZ * 1000);
-            glRotatef(cameraRotationY, 0, 1, 0);
             glRotatef(cameraRotationX, 1, 0, 0);
+            glRotatef(cameraRotationY, 0, 1, 0);
+            glTranslatef(cameraPositionX * 1000, cameraPositionY * 1000, cameraPositionZ * 1000);
         }
 
         {
@@ -244,7 +246,7 @@ namespace UI
 
         bool isActive = false;
 
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < 9; i++)
         {
             if (rigidBody.id == getOSCTrackerNumber(i))
                 isActive = true;
@@ -286,14 +288,40 @@ namespace UI
 
     void RenderUI()
     {
-        currentTime = clock();
+        clock_t nextTime = clock();
 
-        MSG msg;
-        while (::PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE))
+        clock_t deltaTime = nextTime - currentTime;
+
+        currentTime = nextTime;
+
+        static float lookSensitivity = 2.0f, moveSensitivity = 1.0f;
+
+        if (enableFlyControl)
         {
-            ::TranslateMessage(&msg);
-            ::DispatchMessage(&msg);
-            if (msg.message == WM_QUIT)
+            RECT viewportRect;
+            GetWindowRect(mainWindow, &viewportRect);
+
+            float centerX = viewportRect.left + ((viewportRect.right - viewportRect.left) / 2.0f);
+            float centerY = viewportRect.top + ((viewportRect.bottom - viewportRect.top) / 2.0f);
+
+            POINT cursorPosition = { centerX, centerY };
+            GetCursorPos(&cursorPosition);
+
+            float deltaX = cursorPosition.x - centerX;
+            float deltaY = cursorPosition.y - centerY;
+
+            SetCursorPos(centerX, centerY);
+
+            cameraRotationY += deltaX * lookSensitivity * ((float) deltaTime / (float) CLOCKS_PER_SEC);
+            cameraRotationX += deltaY * lookSensitivity * ((float) deltaTime / (float)CLOCKS_PER_SEC);
+        }
+
+        MSG message;
+        while (::PeekMessage(&message, NULL, 0U, 0U, PM_REMOVE))
+        {
+            ::TranslateMessage(&message);
+            ::DispatchMessage(&message);
+            if (message.message == WM_QUIT)
                 mainExit();
         }
 
@@ -450,6 +478,24 @@ namespace UI
             ImGui::PopID();
         }
 
+        ImVec2 setupWindowSize = ImGui::GetWindowSize();
+
+        ImGui::End();
+
+        ImGui::SetNextWindowPos({ 0, configWindowSize.y + setupWindowSize.y });
+        ImGui::SetNextWindowCollapsed(true, ImGuiCond_Once);
+        if (ImGui::Begin("View", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            if (ImGui::Button("Reset View Point"))
+            {
+                cameraPositionX = 0, cameraPositionY = -1, cameraPositionZ = -5;
+                cameraRotationX = 0, cameraRotationY = 0;
+            }
+
+            ImGui::SliderFloat("Look Sensitivity", &lookSensitivity, 0.1f, 5.0f);
+            ImGui::SliderFloat("Move Sensitivity", &moveSensitivity, 0.1f, 1.0f);
+        }
+
         ImGui::End();
 
         ImGui::Render();
@@ -511,7 +557,7 @@ namespace UI
                         wglMakeCurrent(mainDeviceContext, glContext);
 
                         RECT viewportRect;
-                        GetClientRect(mainWindow, &viewportRect);
+                        GetWindowRect(mainWindow, &viewportRect);
 
                         float aspectRatio = ((float)(viewportRect.right - viewportRect.left)) / ((float)(viewportRect.bottom - viewportRect.top));
 
@@ -526,6 +572,29 @@ namespace UI
                     }
                 }
                 return 0;
+            }
+
+            case WM_RBUTTONDOWN:
+            {
+                enableFlyControl = true;
+
+                RECT viewportRect;
+                GetWindowRect(mainWindow, &viewportRect);
+
+                ShowCursor(false);
+
+                SetCursorPos(viewportRect.left + ((viewportRect.right - viewportRect.left) / 2.0f), viewportRect.top + ((viewportRect.bottom - viewportRect.top) / 2.0f));
+
+                break;
+            }
+
+            case WM_RBUTTONUP:
+            {
+                enableFlyControl = false;
+
+                ShowCursor(true);
+
+                break;
             }
 
             case WM_SYSCOMMAND:
