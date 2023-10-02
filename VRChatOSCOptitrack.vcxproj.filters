@@ -1,16 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="RigidBodyCollection.cpp">
-      <Filter>NatNet</Filter>
-    </ClCompile>
-    <ClCompile Include="NATUtils.cpp">
-      <Filter>NatNet</Filter>
-    </ClCompile>
-    <ClCompile Include="MarkerPositionCollection.cpp">
-      <Filter>NatNet</Filter>
-    </ClCompile>
-    <ClCompile Include="OpenGlDrawingFunctions.cpp">
+    <ClCompile Include="DrawingFunctions.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="tinyosc.c">
@@ -47,18 +38,15 @@
     <ClCompile Include="VRChatOSC.cpp">
       <Filter>OSC</Filter>
     </ClCompile>
+    <ClCompile Include="NatNetMath.cpp">
+      <Filter>NatNet</Filter>
+    </ClCompile>
+    <ClCompile Include="NatNetCollections.cpp">
+      <Filter>NatNet</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="RigidBodyCollection.h">
-      <Filter>NatNet</Filter>
-    </ClInclude>
-    <ClInclude Include="NATUtils.h">
-      <Filter>NatNet</Filter>
-    </ClInclude>
-    <ClInclude Include="MarkerPositionCollection.h">
-      <Filter>NatNet</Filter>
-    </ClInclude>
-    <ClInclude Include="OpenGlDrawingFunctions.h">
+    <ClInclude Include="DrawingFunctions.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="tinyosc.h">
@@ -97,6 +85,12 @@
     </ClInclude>
     <ClInclude Include="VRChatOSC.h">
       <Filter>OSC</Filter>
+    </ClInclude>
+    <ClInclude Include="NatNetMath.h">
+      <Filter>NatNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NatNetCollections.h">
+      <Filter>NatNet</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

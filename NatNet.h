@@ -5,6 +5,11 @@
 
 #include <tuple>
 
+#include "NatNetTypes.h"
+#include "NatNetCAPI.h"
+#include "NatNetClient.h"
+#include "NatNetMath.h"
+
 namespace NatNet
 {
 	typedef struct
@@ -32,11 +37,9 @@ namespace NatNet
 	char* GetServerAddress();
 	bool UsingMulticast();
 
-	int RigidBodyCount();
-	RigidBody GetRigidBody(int index);
-
-	int MarkerCount();
-	Marker GetMarker(int index);
+	void NATNET_CALLCONV dataHandler(sFrameOfMocapData* data, void* pUserData);
+	void NATNET_CALLCONV messageHandler(Verbosity msgType, const char* msg);
+	bool parseRigidBodyDescription(sDataDescriptions* pDataDefs);
 }
 
 #endif
