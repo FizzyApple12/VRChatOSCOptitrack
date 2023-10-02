@@ -50,6 +50,9 @@ namespace VRChatOSC
 
     void Disconnect()
     {
+        if (!connected)
+            return;
+
         shutdown(vrchatSocket, 2);
         closesocket(vrchatSocket);
 
