@@ -1,8 +1,8 @@
 #include "NatNetCollections.h"
 #include "NatNet.h"
 
-#define MAX_MARKER_COUNT 512
-#define MAX_RIGIDBODY_COUNT 512
+#define MAX_MARKER_COUNT 4096
+#define MAX_RIGIDBODY_COUNT 4096
 
 namespace NatNetRigidBodyCollection
 {

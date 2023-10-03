@@ -313,7 +313,10 @@ namespace UI
             SetCursorPos(centerX, centerY);
 
             cameraRotationY += deltaX * lookSensitivity * ((float) deltaTime / (float) CLOCKS_PER_SEC);
-            cameraRotationX += deltaY * lookSensitivity * ((float) deltaTime / (float)CLOCKS_PER_SEC);
+            cameraRotationX += deltaY * lookSensitivity * ((float)deltaTime / (float)CLOCKS_PER_SEC);
+
+            cameraPositionZ += deltaX * lookSensitivity * ((float)deltaTime / (float)CLOCKS_PER_SEC);
+            cameraPositionY += deltaY * lookSensitivity * ((float)deltaTime / (float)CLOCKS_PER_SEC);
         }
 
         MSG message;
@@ -456,9 +459,11 @@ namespace UI
                     ImGui::PushID(i);
 
                     NatNet::RigidBody activeRigidBody = NatNetRigidBodyCollection::Get(i);
-                    char rigidBodyName[64];
+                    char rigidBodyName[1024];
 
-                    sprintf(rigidBodyName, "(%03d) %s", activeRigidBody.id, activeRigidBody.name);
+                    static std::string testText = activeRigidBody.name;
+
+                    sprintf(rigidBodyName, "(%03d) %32s", activeRigidBody.id, testText.c_str());
 
                     if (ImGui::Selectable(rigidBodyName, selectedTrackerId == activeRigidBody.id))
                         selectedTrackerId = activeRigidBody.id;
