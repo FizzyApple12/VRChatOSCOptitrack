@@ -137,15 +137,11 @@ namespace NatNet
                 NatNetMath::ConvertRHSPosZupToYUp(x, y, z);
 
             NatNetMarkerCollection::Append({
-                {
-                    x, y, z
-                },
+                x, y, z,
 
                 i
             });
         }
-
-        int rigidBodyCount = min(512, data->MocapData->nMarkers);
 
         for (int i = 0; i < data->nSkeletons; i++)
         {
@@ -168,22 +164,16 @@ namespace NatNet
                     NatNetMath::ConvertRHSRotZUpToYUp(rotation.x, rotation.y, rotation.z, rotation.w);
                 }
 
-                NatNetMath::EulerAngles rotationEuler = NatNetMath::Eul_FromQuat(rotation, EulOrdZYXr);
+                NatNetMath::EulerAngles rotationEuler = NatNetMath::Eul_FromQuat(rotation);
 
                 NatNet::RigidBody rigidBody = {
-                    {
-                        x, y, z
-                    },
+                    x, y, z,
 
-                    {
-                        rotationEuler.x * (180.0f / MATH_PI),
-                        rotationEuler.y * (180.0f / MATH_PI),
-                        rotationEuler.z * (180.0f / MATH_PI)
-                    },
+                    rotationEuler.x * (180.0f / MATH_PI),
+                    rotationEuler.y * (180.0f / MATH_PI),
+                    rotationEuler.z * (180.0f / MATH_PI),
 
-                    data->Skeletons[i].RigidBodyData[j].ID,
-
-                    idToNameMap[data->Skeletons[i].RigidBodyData[j].ID]
+                    data->Skeletons[i].RigidBodyData[j].ID
                 };
 
                 if (!NatNetRigidBodyCollection::Update(rigidBody))
@@ -217,9 +207,7 @@ namespace NatNet
 
                     for (int j = 0; j < skeletonDescription->nRigidBodies; j++)
                     {
-                        int id = skeletonDescription->RigidBodies[j].ID | (skeletonDescription->skeletonID << 16);
-
-                        idToNameMap[id] = std::string(skeletonDescription->RigidBodies[j].szName);
+                        idToNameMap[skeletonDescription->RigidBodies[i].ID | (skeletonDescription->skeletonID << 16)] = std::string(skeletonDescription->RigidBodies[j].szName);
                     }
 
                     break;
@@ -232,6 +220,10 @@ namespace NatNet
 
     std::string GetMappedName(int index)
     {
-        return idToNameMap.at(index);
+        int id = NatNetRigidBodyCollection::Get(index).id;
+
+        if (idToNameMap.count(id)) return idToNameMap.at(id);
+
+        return std::string("Unnamed Tracker");
     }
 }

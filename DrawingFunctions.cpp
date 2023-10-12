@@ -73,12 +73,12 @@ namespace DrawingFunctions
         if (active)
             selectionColorBump = 0.5f;
         if (selected)
-            selectionColorBump = 1.0f;
+            glColor3f(0.8f, 0.8f, 0.8f);
 
         glBegin(GL_QUADS);
 
         // FRONT
-        glColor3f(0.0f, 0.0f, selectionColorBump);
+        if (!selected) glColor3f(0.0f, 0.0f, selectionColorBump);
         glNormal3f(0.0f, 0.0f, 1.0f);
         glVertex3f(-sizex, -sizey, sizez);
         glVertex3f(sizex, -sizey, sizez);
@@ -94,7 +94,7 @@ namespace DrawingFunctions
 
 
         // LEFT
-        glColor3f(selectionColorBump, 0.0f, 0.0f);
+        if (!selected) glColor3f(selectionColorBump, 0.0f, 0.0f);
         glNormal3f(1.0f, 0.0f, 0.0f);
         glVertex3f(-sizex, -sizey, sizez);
         glVertex3f(-sizex, sizey, sizez);
@@ -110,7 +110,7 @@ namespace DrawingFunctions
 
 
         // TOP
-        glColor3f(0.0f, selectionColorBump, 0.0f);
+        if (!selected) glColor3f(0.0f, selectionColorBump, 0.0f);
         glNormal3f(0.0f, 1.0f, 0.0f);
         glVertex3f(-sizex, sizey, sizez);
         glVertex3f(sizex, sizey, sizez);
