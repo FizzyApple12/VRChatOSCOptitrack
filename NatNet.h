@@ -22,6 +22,7 @@ namespace NatNet
 		float rx;
 		float ry;
 		float rz;
+		float rw;
 
 		int id;
 	} RigidBody;

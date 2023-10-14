@@ -25,10 +25,11 @@ namespace NatNetMath
 
     EulerAngles NormalizeAngles(EulerAngles angles)
     {
-        angles.x = NormalizeAngle(angles.x * (180.0 / MATH_PI));
-        angles.y = NormalizeAngle(angles.y * (180.0 / MATH_PI));
-        angles.z = NormalizeAngle(angles.z * (180.0 / MATH_PI));
-        return angles;
+        return { 
+            NormalizeAngle(angles.x * (180.0 / MATH_PI)),
+            NormalizeAngle(angles.y * (180.0 / MATH_PI)),
+            NormalizeAngle(angles.z * (180.0 / MATH_PI))
+        };
     }
 
     /* Convert quaternion to Euler angles (in radians). */
@@ -56,7 +57,12 @@ namespace NatNetMath
             v.z = 0;
             return NormalizeAngles(v);
         }
-        Quaternion q = rotation;
+        Quaternion q = {
+            rotation.w,
+            rotation.z,
+            rotation.x,
+            rotation.y
+        };
         v.y = (float)atan2(2.0 * q.x * q.w + 2.0 * q.y * q.z, 1 - 2.0 * (q.z * q.z + q.w * q.w));     // Yaw
         v.x = (float)asin(2.0 * (q.x * q.z - q.w * q.y));                             // Pitch
         v.z = (float)atan2(2.0 * q.x * q.y + 2.0 * q.z * q.w, 1 - 2.0 * (q.y * q.y + q.z * q.z));      // Roll
