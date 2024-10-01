@@ -4,3 +4,5 @@
 Debug/
 bin/
 .vs/
+
+imgui.ini
