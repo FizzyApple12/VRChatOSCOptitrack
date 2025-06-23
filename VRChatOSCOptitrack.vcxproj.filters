@@ -4,9 +4,6 @@
     <ClCompile Include="DrawingFunctions.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="tinyosc.c">
-      <Filter>OSC</Filter>
-    </ClCompile>
     <ClCompile Include="UI.cpp">
       <Filter>UI</Filter>
     </ClCompile>
@@ -35,22 +32,22 @@
     <ClCompile Include="NatNet.cpp">
       <Filter>NatNet</Filter>
     </ClCompile>
-    <ClCompile Include="VRChatOSC.cpp">
-      <Filter>OSC</Filter>
-    </ClCompile>
     <ClCompile Include="NatNetMath.cpp">
       <Filter>NatNet</Filter>
     </ClCompile>
     <ClCompile Include="NatNetCollections.cpp">
       <Filter>NatNet</Filter>
     </ClCompile>
+    <ClCompile Include="TrackerDeviceProvider.cpp">
+      <Filter>SteamVR</Filter>
+    </ClCompile>
+    <ClCompile Include="TrackerDeviceDriver.cpp">
+      <Filter>SteamVR</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DrawingFunctions.h">
       <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="tinyosc.h">
-      <Filter>OSC</Filter>
     </ClInclude>
     <ClInclude Include="UI.h">
       <Filter>UI</Filter>
@@ -83,14 +80,20 @@
     <ClInclude Include="NatNet.h">
       <Filter>NatNet</Filter>
     </ClInclude>
-    <ClInclude Include="VRChatOSC.h">
-      <Filter>OSC</Filter>
-    </ClInclude>
     <ClInclude Include="NatNetMath.h">
       <Filter>NatNet</Filter>
     </ClInclude>
     <ClInclude Include="NatNetCollections.h">
       <Filter>NatNet</Filter>
+    </ClInclude>
+    <ClInclude Include="openvr\headers\openvr_driver.h">
+      <Filter>openvr</Filter>
+    </ClInclude>
+    <ClInclude Include="TrackerDeviceProvider.h">
+      <Filter>SteamVR</Filter>
+    </ClInclude>
+    <ClInclude Include="TrackerDeviceDriver.h">
+      <Filter>SteamVR</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -100,11 +103,14 @@
     <Filter Include="UI">
       <UniqueIdentifier>{c38b2e28-82ad-434f-9af4-a201162ae313}</UniqueIdentifier>
     </Filter>
-    <Filter Include="OSC">
-      <UniqueIdentifier>{0e409697-82c8-47ee-b332-1840cfa4d34d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="imgui">
       <UniqueIdentifier>{1600374a-496d-43ac-aeaf-618d3d2115ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SteamVR">
+      <UniqueIdentifier>{673abfa4-e6d8-4ea5-8dc2-ae98f28eba73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="openvr">
+      <UniqueIdentifier>{3ccd3e8e-0810-44da-b190-3e92a97c44bc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

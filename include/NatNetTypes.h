@@ -283,8 +283,16 @@ typedef struct sRigidBodyData
 
 #if defined(__cplusplus)
     sRigidBodyData()
-        : ID( 0 )
-        , params( 0 )
+        : ID( 0 ),
+        x(0),
+        y(0),
+        z(0),
+        qx(0),
+        qy(0),
+        qz(0),
+        qw(0),
+        MeanError(0),
+        params( 0 )
     {
     }
 #endif

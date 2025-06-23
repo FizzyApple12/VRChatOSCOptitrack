@@ -1,0 +1,6 @@
+{
+   "driver_vrchatoscoptitrack" : {
+      "enable" : true,
+      "optitrack_tracker_model_number" : "OptiTrack Rigidbody"
+   }
+}

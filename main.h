@@ -6,11 +6,11 @@
 #include "NatNet.h"
 #include "NatNetMath.h"
 
-void mainExit();
+bool StartApplicationThread();
+void ExitApplicationThread();
 
-void setOSCTrackerNumber(int oscId, int optitrackId);
-int getOSCTrackerNumber(int oscId);
-
-NatNetMath::EulerAngles trackerToVRChat(NatNet::RigidBody rigidbody);
+void setSteamVRTrackerNumber(int trackerId, int optitrackId);
+int getSteamVRTrackerNumber(int trackerId);
+std::string getSteamVRTrackerName(int trackerId);
 
 #endif;

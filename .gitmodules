@@ -1,3 +1,6 @@
 [submodule "imgui"]
 	path = imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "openvr"]
+	path = openvr
+	url = git@github.com:ValveSoftware/openvr.git

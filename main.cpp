@@ -1,17 +1,30 @@
 #include "main.h"
 
+#include "openvr/headers/openvr_driver.h"
 #include <windows.h>
 
 #include "UI.h"
-#include "VRChatOSC.h"
 #include "NatNet.h"
 #include "NatNetCollections.h"
 #include "NatNetMath.h"
+#include "TrackerDeviceProvider.h"
+
+#if defined( _WIN32 )
+#define HMD_DLL_EXPORT extern "C" __declspec( dllexport )
+#define HMD_DLL_IMPORT extern "C" __declspec( dllimport )
+#elif defined( __GNUC__ ) || defined( COMPILER_GCC ) || defined( __APPLE__ )
+#define HMD_DLL_EXPORT extern "C" __attribute__( ( visibility( "default" ) ) )
+#define HMD_DLL_IMPORT extern "C"
+#else
+#error "Unsupported Platform."
+#endif
+
+OptiTrackTrackerDeviceProvider optiTrackTrackerDeviceProvider;
 
 bool running = true;
 
-int oscHeadOptiTrackId = 5;
-int oscOptiTrackIds[8] = {
+int headOptiTrackId = 5;
+int optiTrackIds[8] = {
     1,  // hip
 
     3,  // chest
@@ -26,8 +39,22 @@ int oscOptiTrackIds[8] = {
     12, // right elbow
 };
 
-int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+HMD_DLL_EXPORT void* HmdDriverFactory(const char* pInterfaceName, int* pReturnCode)
 {
+    if (0 == strcmp(vr::IServerTrackedDeviceProvider_Version, pInterfaceName))
+    {
+        return &optiTrackTrackerDeviceProvider;
+    }
+
+    if (pReturnCode)
+        *pReturnCode = vr::VRInitError_Init_InterfaceNotFound;
+
+    return NULL;
+}
+
+std::thread uiThread;
+
+void uiThreadEntrypoint() {
     UI::CreateUI();
 
     while (running)
@@ -39,22 +66,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             NatNet::RigidBody activeRigidBody = NatNetRigidBodyCollection::Get(i);
 
             UI::RenderRigidBody(activeRigidBody);
-
-            VRChatOSC::NewMessage();
-
-            for (int j = 0; j < 8; j++) 
-            {
-                if (activeRigidBody.id == oscOptiTrackIds[j])
-                {
-                    VRChatOSC::WritePosition(j, -activeRigidBody.x, activeRigidBody.y, activeRigidBody.z);
-
-                    NatNetMath::EulerAngles convertedAngles = trackerToVRChat(activeRigidBody);
-
-                    VRChatOSC::WriteRotation(j, convertedAngles.x, convertedAngles.y, convertedAngles.z);
-                }
-            }
-
-            VRChatOSC::SendMessage();
         }
 
         for (int i = 0; i < NatNetMarkerCollection::GetCount(); i++)
@@ -65,41 +76,71 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
         UI::RenderUI();
     }
 
-    VRChatOSC::Disconnect();
-    NatNet::Disconnect();
-
     UI::DestroyUI();
-
-    return 0;
 }
 
-void mainExit()
+bool StartApplicationThread()
+{
+    uiThread = std::thread(uiThreadEntrypoint);
+
+    return true;
+}
+
+void ExitApplicationThread()
 {
     running = false;
+
+    uiThread.join();
 }
 
-void setOSCTrackerNumber(int oscId, int optitrackId)
+void setSteamVRTrackerNumber(int trackerId
+    , int optitrackId)
 {
-    if (oscId == 0) oscHeadOptiTrackId = optitrackId;
+    const int oscOptiTrackIdsLength = sizeof(optiTrackIds) / sizeof(int);
 
-    oscOptiTrackIds[oscId - 1] = optitrackId;
+    if (trackerId <= 0) {
+        headOptiTrackId = optitrackId;
+        return;
+    }
+    if (trackerId > oscOptiTrackIdsLength) {
+        optiTrackIds[oscOptiTrackIdsLength - 1] = optitrackId;
+        return;
+    }
+
+    optiTrackIds[trackerId - 1] = optitrackId;
 }
 
-int getOSCTrackerNumber(int oscId)
+int getSteamVRTrackerNumber(int trackerId)
 {
-    if (oscId == 0) return oscHeadOptiTrackId;
+    const int oscOptiTrackIdsLength = sizeof(optiTrackIds) / sizeof(int);
 
-    return oscOptiTrackIds[oscId - 1];
+    if (trackerId <= 0) return headOptiTrackId;
+    if (trackerId > oscOptiTrackIdsLength) return optiTrackIds[oscOptiTrackIdsLength - 1];
+
+    return optiTrackIds[trackerId - 1];
 }
 
-NatNetMath::EulerAngles trackerToVRChat(NatNet::RigidBody rigidbody)
-{
-    NatNetMath::Quaternion rotation = { // this had odd negatives because we need a left-handed rotation
-        rigidbody.rx,
-        -rigidbody.ry,
-        -rigidbody.rz,
-        rigidbody.rw
-    };
+std::string getSteamVRTrackerName(int trackerId) {
+    switch (trackerId) {
+    case 0:
+        return "Head";
+    case 1:
+        return "Hip";
+    case 2:
+        return "Chest";
+    case 3: 
+        return "Left Foot";
+    case 4: 
+        return "Right Foot";
+    case 5: 
+        return "Left Knee";
+    case 6: 
+        return "Right Knee";
+    case 7: 
+        return "Left Elbow";
+    case 8: 
+        return "Right Elbow";
+    }
 
-    return NatNetMath::Eul_FromQuat(rotation);
+    return "Unkown ID: " + std::to_string(trackerId);
 }

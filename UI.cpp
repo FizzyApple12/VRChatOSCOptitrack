@@ -13,7 +13,6 @@
 #include <GL/glu.h>
 
 #include "main.h"
-#include "VRChatOSC.h"
 #include "NatNet.h"
 #include "NatNetMath.h"
 #include <stdio.h>
@@ -284,7 +283,7 @@ namespace UI
 
         for (int i = 0; i < 9; i++)
         {
-            if (rigidBody.id == getOSCTrackerNumber(i))
+            if (rigidBody.id == getSteamVRTrackerNumber(i))
                 isActive = true;
         }
 
@@ -306,20 +305,20 @@ namespace UI
 
     void createTrackerSelecter(const char* label, int oscId)
     {
-        int optitrackId = getOSCTrackerNumber(oscId);
+        int optitrackId = getSteamVRTrackerNumber(oscId);
 
         ImGui::PushID("intinput", label);
 
         if (ImGui::InputInt("", &optitrackId))
         {
-            setOSCTrackerNumber(oscId, optitrackId);
+            setSteamVRTrackerNumber(oscId, optitrackId);
             selectedTrackerId = optitrackId;
         }
 
         if (ImGui::BeginDragDropTarget())
         {
             if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TRACKER_ID"))
-                setOSCTrackerNumber(oscId, *(const int*) payload->Data);
+                setSteamVRTrackerNumber(oscId, *(const int*) payload->Data);
 
             ImGui::EndDragDropTarget();
         }
@@ -355,7 +354,7 @@ namespace UI
             float centerX = viewportRect.left + ((viewportRect.right - viewportRect.left) / 2.0f);
             float centerY = viewportRect.top + ((viewportRect.bottom - viewportRect.top) / 2.0f);
 
-            POINT cursorPosition = { centerX, centerY };
+            POINT cursorPosition = { (LONG) centerX, (LONG) centerY };
             GetCursorPos(&cursorPosition);
 
             float deltaX = cursorPosition.x - centerX;
@@ -366,29 +365,45 @@ namespace UI
             cameraRotationY += deltaX * lookSensitivity * ((float) deltaTime / (float) CLOCKS_PER_SEC);
             cameraRotationX += deltaY * lookSensitivity * ((float) deltaTime / (float) CLOCKS_PER_SEC);
 
-            float forwardSpeed = 0;
-            float sideSpeed = 0;
+            float localVelocityX = 0;
+            float localVelocityY = 0;
+            float localVelocityZ = 0;
 
             if (ImGui::IsKeyDown(ImGui::GetKeyIndex(ImGuiKey_W)))
-                forwardSpeed++;
+                localVelocityZ++;
             if (ImGui::IsKeyDown(ImGui::GetKeyIndex(ImGuiKey_S)))
-                forwardSpeed--;
+                localVelocityZ--;
 
             if (ImGui::IsKeyDown(ImGui::GetKeyIndex(ImGuiKey_A)))
-                sideSpeed++;
+                localVelocityX++;
             if (ImGui::IsKeyDown(ImGui::GetKeyIndex(ImGuiKey_D)))
-                sideSpeed--;
+                localVelocityX--;
+
+            if (ImGui::IsKeyDown(ImGui::GetKeyIndex(ImGuiKey_Q)))
+                localVelocityY++;
+            if (ImGui::IsKeyDown(ImGui::GetKeyIndex(ImGuiKey_E)))
+                localVelocityY--;
+
+            double sx = sin(-cameraRotationX * (M_PI / 180.0)), cx = cos(-cameraRotationX * (M_PI / 180.0));
+            double sy = sin(-cameraRotationY * (M_PI / 180.0)), cy = cos(-cameraRotationY * (M_PI / 180.0));
+            double sz = sin(0.0f), cz = cos(0.0f);
 
             cameraPositionX += (
-                (cos(cameraRotationX * (M_PI / 180.0)) * sin(-cameraRotationY * (M_PI / 180.0)) * forwardSpeed) +
-                (cos(-cameraRotationY * (M_PI / 180.0)) * sideSpeed)
-                ) * ((float)deltaTime / (float)CLOCKS_PER_SEC) * moveSensitivity;
+                    (cz * cy) * localVelocityX +
+                    (cz * sy * sx - sz * cx) * localVelocityY +
+                    (cz * sy * cx + sz * sx) * localVelocityZ
+                ) * ((float) deltaTime / (float) CLOCKS_PER_SEC) * moveSensitivity;
 
-            cameraPositionY += sin(cameraRotationX * (M_PI / 180.0)) * forwardSpeed * ((float) deltaTime / (float) CLOCKS_PER_SEC) * moveSensitivity;
+            cameraPositionY += (
+                    (sz * cy) * localVelocityX +
+                    (sz * sy * sx + cz * cx) * localVelocityY +
+                    (sz * sy * cx - cz * sx) * localVelocityZ
+                ) * ((float) deltaTime / (float) CLOCKS_PER_SEC) * moveSensitivity;
 
             cameraPositionZ += (
-                (cos(cameraRotationX * (M_PI / 180.0)) * cos(-cameraRotationY * (M_PI / 180.0)) * forwardSpeed) +
-                (sin(cameraRotationY * (M_PI / 180.0)) * sideSpeed)
+                    (-sy) * localVelocityX +
+                    (cy * sx) * localVelocityY +
+                    (cy * cx) * localVelocityZ
                 ) * ((float) deltaTime / (float) CLOCKS_PER_SEC) * moveSensitivity;
         }
 
@@ -398,7 +413,7 @@ namespace UI
             ::TranslateMessage(&message);
             ::DispatchMessage(&message);
             if (message.message == WM_QUIT)
-                mainExit();
+                ExitApplicationThread();
         }
 
         ImGui_ImplOpenGL3_NewFrame();
@@ -409,43 +424,43 @@ namespace UI
         ImGui::SetNextWindowCollapsed(false, ImGuiCond_Once);
         if (ImGui::Begin("Configuration", NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
-            {// VRChat OSC UI Code
-                if (VRChatOSC::IsConnected())
-                    ImGui::PushStyleColor(ImGuiCol_Separator, (ImVec4)ImColor::HSV(0.2f / 0.7f, 0.6f, 0.6f));
-                else
-                    ImGui::PushStyleColor(ImGuiCol_Separator, (ImVec4)ImColor::HSV(0, 0.6f + sin(currentTime / 100.0f) * 0.2f, 0.6f + sin(currentTime / 100.0f) * 0.2f));
+            //{// VRChat OSC UI Code
+            //    if (VRChatOSC::IsConnected())
+            //        ImGui::PushStyleColor(ImGuiCol_Separator, (ImVec4)ImColor::HSV(0.2f / 0.7f, 0.6f, 0.6f));
+            //    else
+            //        ImGui::PushStyleColor(ImGuiCol_Separator, (ImVec4)ImColor::HSV(0, 0.6f + sin(currentTime / 100.0f) * 0.2f, 0.6f + sin(currentTime / 100.0f) * 0.2f));
 
-                ImGui::SeparatorText("VRChat OSC");
+            //    ImGui::SeparatorText("VRChat OSC");
 
-                ImGui::PopStyleColor(1);
+            //    ImGui::PopStyleColor(1);
 
-                static int vrChatIpAddress[4] = { 127, 0, 0, 1 };
-                ImGui::InputInt4("IP Address", vrChatIpAddress);
+            //    static int vrChatIpAddress[4] = { 127, 0, 0, 1 };
+            //    ImGui::InputInt4("IP Address", vrChatIpAddress);
 
-                CLAMP_INT(vrChatIpAddress[0], 0, 255);
-                CLAMP_INT(vrChatIpAddress[1], 0, 255);
-                CLAMP_INT(vrChatIpAddress[2], 0, 255);
-                CLAMP_INT(vrChatIpAddress[3], 0, 255);
+            //    CLAMP_INT(vrChatIpAddress[0], 0, 255);
+            //    CLAMP_INT(vrChatIpAddress[1], 0, 255);
+            //    CLAMP_INT(vrChatIpAddress[2], 0, 255);
+            //    CLAMP_INT(vrChatIpAddress[3], 0, 255);
 
-                if (VRChatOSC::IsConnected())
-                {
-                    if (ImGui::Button("Disconnect"))
-                        VRChatOSC::Disconnect();
+            //    if (VRChatOSC::IsConnected())
+            //    {
+            //        if (ImGui::Button("Disconnect"))
+            //            VRChatOSC::Disconnect();
 
-                    ImGui::Text("Currently Connected to: %s", VRChatOSC::GetAddress());
-                }
-                else
-                {
-                    ImGui::PushID("VRChatConnect");
+            //        ImGui::Text("Currently Connected to: %s", VRChatOSC::GetAddress());
+            //    }
+            //    else
+            //    {
+            //        ImGui::PushID("VRChatConnect");
 
-                    if (ImGui::Button("Connect"))
-                        VRChatOSC::Connect(vrChatIpAddress);
+            //        if (ImGui::Button("Connect"))
+            //            VRChatOSC::Connect(vrChatIpAddress);
 
-                    ImGui::PopID();
+            //        ImGui::PopID();
 
-                    ImGui::Text("Currently Disconnected");
-                }
-            }
+            //        ImGui::Text("Currently Disconnected");
+            //    }
+            //}
 
             {// OptiTrack Motive UI Code 
                 if (NatNet::IsConnected())
@@ -534,7 +549,7 @@ namespace UI
                     NatNet::RigidBody activeRigidBody = NatNetRigidBodyCollection::Get(i);
                     char rigidBodyName[1024];
 
-                    sprintf(rigidBodyName, "(%03d) %-32s", activeRigidBody.id, NatNet::GetMappedName(activeRigidBody.id).c_str());
+                    sprintf_s(rigidBodyName, sizeof(rigidBodyName), "(%03d) %-32s", activeRigidBody.id, NatNet::GetMappedName(activeRigidBody.id).c_str());
 
                     if (ImGui::Selectable(rigidBodyName, selectedTrackerId == activeRigidBody.id))
                     {

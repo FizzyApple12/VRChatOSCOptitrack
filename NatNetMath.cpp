@@ -46,14 +46,14 @@ namespace NatNetMath
         if (test > 0.4995f * unit)
         { // singularity at north pole
             v.y = 2.0 * atan2(rotation.y, rotation.x);
-            v.x = MATH_PI / 2;
+            v.x = (float) (MATH_PI / 2);
             v.z = 0;
             return NormalizeAngles(v);
         }
         if (test < -0.4995f * unit)
         { // singularity at south pole
             v.y = -2.0 * atan2(rotation.y, rotation.x);
-            v.x = -MATH_PI / 2;
+            v.x = (float) (-MATH_PI / 2);
             v.z = 0;
             return NormalizeAngles(v);
         }
@@ -93,7 +93,7 @@ namespace NatNetMath
     {
         // -90 deg rotation about +X
         float qRx, qRy, qRz, qRw;
-        float angle = -90.0f * MATH_PI / 180.0f;
+        float angle = (float) (-90.0f * MATH_PI / 180.0f);
         qRx = sin(angle / 2.0f);
         qRy = 0.0f;
         qRz = 0.0f;

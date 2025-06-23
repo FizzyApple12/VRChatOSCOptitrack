@@ -38,8 +38,8 @@ namespace NatNet
 
         natnetClient.SetFrameReceivedCallback(dataHandler);
 
-        sprintf(natnetLocalAddress, "%d.%d.%d.%d", localAddress[0], localAddress[1], localAddress[2], localAddress[3]);
-        sprintf(natnetServerAddress, "%d.%d.%d.%d", serverAddress[0], serverAddress[1], serverAddress[2], serverAddress[3]);
+        sprintf_s(natnetLocalAddress, sizeof(natnetLocalAddress), "%d.%d.%d.%d", localAddress[0], localAddress[1], localAddress[2], localAddress[3]);
+        sprintf_s(natnetServerAddress, sizeof(natnetServerAddress), "%d.%d.%d.%d", serverAddress[0], serverAddress[1], serverAddress[2], serverAddress[3]);
 
         sNatNetClientConnectParams connectParams;
 

@@ -1,8 +1,6 @@
 # VRChat OSC Optitrack
 
-This program allows you to take tracker data from OptiTrack Motive and send it to VRChat's OSC Tracker endpoint.
-
-Note: This program is very primitive and needs some work to get correct. Most notably: there is no playspace calibration. To calibrate the playspaces between the Headset and the OptiTrack System, you should use the headset recenter button to move the headset playspace until the skeleton visually lines up with your body in game. Make sure to avoid using tools like Playspace Drag to prevent the playspaces from becoming misaligned.
+This program allows you to take tracker data from OptiTrack Motive and send it to SteamVR as Trackers.
 
 ## Usage
 
@@ -16,4 +14,14 @@ The code should compile properly under Visual Studio 2022, but there are some st
 
 ### Running
 
-To maximize compatability with different Skeleton types, the program uses the raw RigidBodies on a skeleton to represent "trackers". Each joint in VRChat needs to be assigned a tracker with the "Tracking Setup" menu. In the case of multiple Skeletons in the scene, as long as the IDs of the RigidBodies are persisted, the program should be able to find the correct skeleton.
+To register the driver with SteamVR, do the following steps:
+
+1. Compile and copy ``bin/x64/VRChatOSCOptitrack.dll`` to ``vrchatoscoptitrack/bin/win64/driver_vrchatoscoptitrack.dll``
+
+2. Copy ``bin/x64/NatNetLib.dll`` to ``vrchatoscoptitrack/bin/win64/NatNetLib.dll``
+
+3. Run ``& "C:\Program Files (x86)\Steam\steamapps\common\SteamVR\bin\win64\vrpathreg.exe" adddriver "C:\path\to\your\cloned\VRChatOSCOptitrack\vrchatoscoptitrack\"`` in PowerShell to register the driver with SteamVR
+
+4. Run SteamVR
+
+To maximize compatibility with different Skeleton types, the program uses the raw RigidBodies on a skeleton to represent "trackers". Each joint in VRChat needs to be assigned a tracker with the "Tracking Setup" menu. In the case of multiple Skeletons in the scene, as long as the IDs of the RigidBodies are persisted, the program should be able to find the correct skeleton.
