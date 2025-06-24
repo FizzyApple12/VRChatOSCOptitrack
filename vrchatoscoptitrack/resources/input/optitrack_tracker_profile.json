@@ -1,0 +1,17 @@
+{
+    "jsonid": "input_profile",
+    "controller_type": "optitrack_tracker",
+    "input_bindingui_mode": "single_device",
+    "tracker_types": {
+        "TrackerRole_Waist": "{simpletrackers}/input/optitrack_tracker/waist_profile.json",
+        "TrackerRole_Chest": "{simpletrackers}/input/optitrack_tracker/chest_profile.json",
+        "TrackerRole_LeftFoot": "{simpletrackers}/input/optitrack_tracker/leftfoot_profile.json",
+        "TrackerRole_RightFoot": "{simpletrackers}/input/optitrack_tracker/rightfoot_profile.json",
+        "TrackerRole_LeftKnee": "{simpletrackers}/input/optitrack_tracker/leftknee_profile.json",
+        "TrackerRole_RightKnee": "{simpletrackers}/input/optitrack_tracker/rightknee_profile.json",
+        "TrackerRole_LeftElbow": "{simpletrackers}/input/optitrack_tracker/leftelbow_profile.json",
+        "TrackerRole_RightElbow": "{simpletrackers}/input/optitrack_tracker/rightelbow_profile.json"
+    },
+    "input_source": {},
+    "default_bindings": []
+}

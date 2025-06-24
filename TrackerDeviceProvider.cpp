@@ -2,6 +2,7 @@
 #include "TrackerDeviceDriver.h"
 #include "NatNetCollections.h"
 #include "main.h"
+#include <Eigen/Eigen>
 
 vr::EVRInitError OptiTrackTrackerDeviceProvider::Init(vr::IVRDriverContext* pDriverContext)
 {
@@ -39,19 +40,6 @@ bool OptiTrackTrackerDeviceProvider::ShouldBlockStandbyMode()
 
 void OptiTrackTrackerDeviceProvider::RunFrame()
 {
-	for (int i = 0; i < NatNetRigidBodyCollection::GetCount(); i++)
-	{
-		for (const auto& tracker : optiTrackTrackerDevices)
-		{
-			NatNet::RigidBody activeRigidBody = NatNetRigidBodyCollection::Get(i);
-
-			if (activeRigidBody.id == getSteamVRTrackerNumber(tracker->trackerIndex + 1))
-			{
-				tracker->UpdateOptiTrackPose(activeRigidBody);
-			}
-		}
-	}
-
 	vr::VREvent_t vrevent{};
 	while (vr::VRServerDriverHost()->PollNextEvent(&vrevent, sizeof(vr::VREvent_t)))
 	{
@@ -77,4 +65,8 @@ void OptiTrackTrackerDeviceProvider::Cleanup()
 	NatNet::Disconnect();
 
 	ExitApplicationThread();
+}
+
+void OptiTrackTrackerDeviceProvider::SetPlayspaceOffset(Eigen::Vector3<float> position, Eigen::Quaternion<float> rotation) {
+	//TODO;
 }

@@ -523,6 +523,20 @@ namespace UI
         ImGui::SetNextWindowCollapsed(true, ImGuiCond_Once);
         if (ImGui::Begin("Tracking Setup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
+            ImGui::Text("Playspace");
+
+            if (ImGui::Button("Recenter")) {
+                recenterOptiTrackPlayspace();
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Reset")) {
+                resetOptiTrackPlayspace();
+            }
+
+            ImGui::Text("IDs");
+
             createTrackerSelecter("Head", 0);
 
             createTrackerSelecter("Hips", 1);

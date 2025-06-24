@@ -86,9 +86,6 @@
     <ClInclude Include="NatNetCollections.h">
       <Filter>NatNet</Filter>
     </ClInclude>
-    <ClInclude Include="openvr\headers\openvr_driver.h">
-      <Filter>openvr</Filter>
-    </ClInclude>
     <ClInclude Include="TrackerDeviceProvider.h">
       <Filter>SteamVR</Filter>
     </ClInclude>
@@ -108,9 +105,6 @@
     </Filter>
     <Filter Include="SteamVR">
       <UniqueIdentifier>{673abfa4-e6d8-4ea5-8dc2-ae98f28eba73}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="openvr">
-      <UniqueIdentifier>{3ccd3e8e-0810-44da-b190-3e92a97c44bc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -9,6 +9,7 @@
 #include "NatNetClient.h"
 #include "NatNetCollections.h"
 #include <map>
+#include "main.h"
 
 namespace NatNet
 {
@@ -183,6 +184,8 @@ namespace NatNet
                     NatNetRigidBodyCollection::Append(rigidBody);
             }
         }
+
+        trackerFrameReceived();
     }
 
     bool parseRigidBodyDescription(sDataDescriptions* dataDefinitions)

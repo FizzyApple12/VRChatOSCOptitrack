@@ -4,3 +4,6 @@
 [submodule "openvr"]
 	path = openvr
 	url = git@github.com:ValveSoftware/openvr.git
+[submodule "eigen"]
+	path = eigen
+	url = https://gitlab.com/libeigen/eigen.git

@@ -1,0 +1,14 @@
+{
+    "jsonid": "input_profile",
+    "controller_type": "optitrack_tracker_rightknee",
+    "input_bindingui_mode": "single_device",
+    "input_source": {
+        "/pose/rightkneepose": {
+            "type": "pose",
+            "binding_image_point": [
+                100,
+                90
+            ]
+        }
+    }
+}

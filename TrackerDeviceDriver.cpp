@@ -17,7 +17,7 @@ OptiTrackTrackerDeviceDriver::OptiTrackTrackerDeviceDriver(unsigned int newTrack
 		mainSettingsSection, settingsKeyModelNumber, model_number, sizeof(model_number));
 	modelNumber = model_number;
 
-	serialNumber = modelNumber + " " + getSteamVRTrackerName(trackerIndex);
+	serialNumber = modelNumber + " " + getSteamVRTrackerName(trackerIndex + 1);
 }
 
 vr::EVRInitError OptiTrackTrackerDeviceDriver::Activate(uint32_t newSteamVRDeviceIndex)
@@ -29,6 +29,8 @@ vr::EVRInitError OptiTrackTrackerDeviceDriver::Activate(uint32_t newSteamVRDevic
 
 	vr::VRProperties()->SetStringProperty(container, vr::Prop_ModelNumber_String, modelNumber.c_str());
 	vr::VRProperties()->SetStringProperty(container, vr::Prop_SerialNumber_String, serialNumber.c_str());
+
+	vr::VRProperties()->SetStringProperty(container, vr::Prop_InputProfilePath_String, "{vrchatoscoptitrack}/input/optitrack_tracker_profile.json");
 
 	return vr::VRInitError_None;
 }
@@ -59,11 +61,6 @@ void OptiTrackTrackerDeviceDriver::UpdateOptiTrackPose(NatNet::RigidBody rigidbo
 		pose.qWorldFromDriverRotation.w = 1.f;
 		pose.qDriverFromHeadRotation.w = 1.f;
 
-		vr::TrackedDevicePose_t hmd_pose{};
-
-		// TODO: autoalign
-		// vr::VRServerDriverHost()->GetRawTrackedDevicePoses(0.f, &hmd_pose, 1);
-
 		// if fucked up try the comments
 		pose.vecPosition[0] = rigidbody.x; // make -
 		pose.vecPosition[1] = rigidbody.y; // make +
@@ -79,9 +76,9 @@ void OptiTrackTrackerDeviceDriver::UpdateOptiTrackPose(NatNet::RigidBody rigidbo
 		pose.deviceIsConnected = true;
 		pose.result = vr::TrackingResult_Running_OK;
 
-		lastReceivedPose = pose;
+		vr::VRServerDriverHost()->TrackedDevicePoseUpdated(steamVRDeviceIndex, pose, sizeof(vr::DriverPose_t));
 
-		vr::VRServerDriverHost()->TrackedDevicePoseUpdated(steamVRDeviceIndex, lastReceivedPose, sizeof(vr::DriverPose_t));
+		lastReceivedPose = pose;
 	}
 }
 

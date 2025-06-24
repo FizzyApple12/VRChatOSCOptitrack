@@ -7,6 +7,7 @@
 
 #include "openvr/headers/openvr_driver.h"
 #include "TrackerDeviceDriver.h"
+#include <Eigen/Eigen>
 
 class OptiTrackTrackerDeviceProvider : public vr::IServerTrackedDeviceProvider
 {
@@ -24,6 +25,8 @@ public:
 	void Cleanup() override;
 
 	// other implementations
+
+	void SetPlayspaceOffset(Eigen::Vector3<float> position, Eigen::Quaternion<float> rotation);
 
 	std::vector<std::unique_ptr<OptiTrackTrackerDeviceDriver>> optiTrackTrackerDevices;
 };
