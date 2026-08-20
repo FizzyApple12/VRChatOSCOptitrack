@@ -16,7 +16,7 @@ namespace VRChatOSC
     struct sockaddr_in vrchatSocketServer;
     bool connected = false;
 
-    char vrchatTargetAddress[16];
+    char vrchatTargetAddress[32];
 
     char oscBuffer[SEND_BUFFER_SIZE];
     tosc_bundle oscBundle;

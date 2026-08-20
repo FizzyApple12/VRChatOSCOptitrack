@@ -17,8 +17,8 @@ namespace NatNet
 
     unsigned char ver[4];
 
-    char natnetLocalAddress[16];
-    char natnetServerAddress[16];
+    char natnetLocalAddress[32];
+    char natnetServerAddress[32];
 
     bool connected = false;
 
@@ -26,7 +26,7 @@ namespace NatNet
 
     int upAxis = 1;
 
-    std::map<int, char*> idToNameMap;
+    std::map<int, std::string> idToNameMap;
 
     int Connect(int* localAddress, int* serverAddress, bool multiCast)
     {
@@ -89,6 +89,8 @@ namespace NatNet
     {
         if (!connected)
             return;
+
+        natnetClient.Disconnect();
 
         connected = false;
     }
@@ -205,7 +207,9 @@ namespace NatNet
                 {
                     sRigidBodyDescription* rigidBodyDescription = dataDefinitions->arrDataDescriptions[i].Data.RigidBodyDescription;
 
-                    idToNameMap[rigidBodyDescription->ID] = rigidBodyDescription->szName;
+                    idToNameMap[rigidBodyDescription->ID] = std::string(rigidBodyDescription->szName);
+
+                    break;
                 }
                 case Descriptor_Skeleton:
                 {
@@ -213,12 +217,21 @@ namespace NatNet
 
                     for (int j = 0; j < skeletonDescription->nRigidBodies; j++)
                     {
-                        idToNameMap[skeletonDescription->RigidBodies[j].ID | (skeletonDescription->skeletonID << 16)] = skeletonDescription->RigidBodies[j].szName;
+                        int id = skeletonDescription->RigidBodies[j].ID | (skeletonDescription->skeletonID << 16);
+
+                        idToNameMap[id] = std::string(skeletonDescription->RigidBodies[j].szName);
                     }
+
+                    break;
                 }
             }
         }
 
         return true;
+    }
+
+    std::string GetMappedName(int index)
+    {
+        return idToNameMap.at(index);
     }
 }

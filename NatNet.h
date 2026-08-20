@@ -4,6 +4,7 @@
 #define NATNET_H
 
 #include <tuple>
+#include <string>
 
 #include "NatNetTypes.h"
 #include "NatNetCAPI.h"
@@ -19,7 +20,7 @@ namespace NatNet
 
 		int id;
 
-		char* name;
+		std::string name;
 	} RigidBody;
 
 	typedef struct
@@ -36,6 +37,8 @@ namespace NatNet
 	char* GetLocalAddress();
 	char* GetServerAddress();
 	bool UsingMulticast();
+
+	std::string GetMappedName(int index);
 
 	void NATNET_CALLCONV dataHandler(sFrameOfMocapData* data, void* pUserData);
 	void NATNET_CALLCONV messageHandler(Verbosity msgType, const char* msg);
