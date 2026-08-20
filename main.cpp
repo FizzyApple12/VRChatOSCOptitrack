@@ -88,7 +88,14 @@ void uiThreadEntrypoint()
 
 bool StartApplicationThread()
 {
-	uiThread = std::thread(uiThreadEntrypoint);
+	try
+	{
+		uiThread = std::thread(uiThreadEntrypoint);
+	}
+	catch (const std::system_error& e)
+	{
+		return false;
+	}
 
 	return true;
 }
