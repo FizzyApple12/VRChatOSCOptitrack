@@ -6,6 +6,7 @@
 #include "VRChatOSC.h"
 #include "NatNet.h"
 #include "NatNetCollections.h"
+#include "NatNetMath.h"
 
 bool running = true;
 
@@ -43,11 +44,13 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
             for (int j = 0; j < 8; j++) 
             {
-                if (activeRigidBody.id == oscOptiTrackIds[i])
+                if (activeRigidBody.id == oscOptiTrackIds[j])
                 {
-                    VRChatOSC::WritePosition(1, activeRigidBody.x, activeRigidBody.y, activeRigidBody.z);
+                    VRChatOSC::WritePosition(j, -activeRigidBody.x, activeRigidBody.y, activeRigidBody.z);
 
-                    VRChatOSC::WriteRotation(1, activeRigidBody.rx, -activeRigidBody.ry, -activeRigidBody.rz);
+                    NatNetMath::EulerAngles convertedAngles = trackerToVRChat(activeRigidBody);
+
+                    VRChatOSC::WriteRotation(j, convertedAngles.x, convertedAngles.y, convertedAngles.z);
                 }
             }
 
@@ -87,4 +90,16 @@ int getOSCTrackerNumber(int oscId)
     if (oscId == 0) return oscHeadOptiTrackId;
 
     return oscOptiTrackIds[oscId - 1];
+}
+
+NatNetMath::EulerAngles trackerToVRChat(NatNet::RigidBody rigidbody)
+{
+    NatNetMath::Quaternion rotation = { // this had odd negatives because we need a left-handed rotation
+        rigidbody.rx,
+        -rigidbody.ry,
+        -rigidbody.rz,
+        rigidbody.rw
+    };
+
+    return NatNetMath::Eul_FromQuat(rotation);
 }

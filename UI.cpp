@@ -15,6 +15,7 @@
 #include "main.h"
 #include "VRChatOSC.h"
 #include "NatNet.h"
+#include "NatNetMath.h"
 #include <stdio.h>
 #include "NatNetCollections.h"
 #include "DrawingFunctions.h"
@@ -236,6 +237,31 @@ namespace UI
         glPopAttrib();
     }
 
+    NatNetMath::Mat4Wrapper testQuatToMat44(NatNetMath::Quaternion q)
+    {
+        float x = q.x * 2.0F;
+        float y = q.y * 2.0F;
+        float z = q.z * 2.0F;
+        float xx = q.x * x;
+        float yy = q.y * y;
+        float zz = q.z * z;
+        float xy = q.x * y;
+        float xz = q.x * z;
+        float yz = q.y * z;
+        float wx = q.w * x;
+        float wy = q.w * y;
+        float wz = q.w * z;
+
+        return {
+            {
+                1.0f - (yy + zz), xy + wz, xz - wy, 0.0,
+                xy - wz, 1.0f - (xx + zz), yz + wx, 0.0,
+                xz + wy, yz - wx, 1.0f - (xx + yy), 0.0,
+                0.0, 0.0, 0.0, 1.0
+            }
+        };
+    }
+
     void RenderRigidBody(NatNet::RigidBody rigidBody)
     {
         glPushAttrib(GL_ALL_ATTRIB_BITS);
@@ -245,11 +271,14 @@ namespace UI
         glRotatef(cameraRotationY, 0, 1, 0);
         glTranslatef(cameraPositionX * 1000, cameraPositionY * 1000, cameraPositionZ * 1000);
 
-        glRotatef(rigidBody.rz, 0.0f, 0.0f, 1.0f);
-        glRotatef(rigidBody.rx, 1.0f, 0.0f, 0.0f);
-        glRotatef(rigidBody.ry, 0.0f, 1.0f, 0.0f);
-
         glTranslatef(rigidBody.x * 1000.0f, rigidBody.y * 1000.0f, rigidBody.z * 1000.0f);
+
+        glMultMatrixf(testQuatToMat44({
+            rigidBody.rx,
+            rigidBody.ry,
+            rigidBody.rz,
+            rigidBody.rw,
+        }).mat);
 
         bool isActive = false;
 
@@ -258,6 +287,16 @@ namespace UI
             if (rigidBody.id == getOSCTrackerNumber(i))
                 isActive = true;
         }
+
+
+        glLineWidth(3.0f);
+        glBegin(GL_LINES);
+
+        glColor3f(0.8f, 0.8f, 0.8f);
+        glVertex3f(0, 0, 0);
+        glVertex3f(0, 0, 100);
+
+        glEnd();
 
         DrawingFunctions::DrawCube(50.0f, isActive, rigidBody.id == selectedTrackerId);
 
@@ -535,7 +574,7 @@ namespace UI
             }
 
             ImGui::SliderFloat("Look Sensitivity", &lookSensitivity, 0.1f, 5.0f);
-            ImGui::SliderFloat("Move Sensitivity", &moveSensitivity, 0.1f, 1.0f);
+            ImGui::SliderFloat("Move Sensitivity", &moveSensitivity, 0.1f, 5.0f);
         }
 
         ImGui::End();

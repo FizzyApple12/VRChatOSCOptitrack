@@ -96,6 +96,10 @@ namespace NatNetMath
         float w;
     } Quaternion;
 
+    typedef struct {
+        float mat[16];
+    } Mat4Wrapper;
+
     typedef Quaternion EulerAngles;
 
     EulerAngles Eul_FromQuat(Quaternion rotation);

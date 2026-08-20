@@ -26,6 +26,8 @@ namespace NatNet
 
     int upAxis = 1;
 
+    bool usingMulticast = false;
+
     std::map<int, std::string> idToNameMap;
 
     int Connect(int* localAddress, int* serverAddress, bool multiCast)
@@ -44,6 +46,8 @@ namespace NatNet
         connectParams.connectionType = multiCast ? ConnectionType_Multicast : ConnectionType_Unicast; //
         connectParams.localAddress = natnetLocalAddress;
         connectParams.serverAddress = natnetServerAddress;
+
+        usingMulticast = multiCast;
 
         if (natnetClient.Connect(connectParams) != ErrorCode_OK)
             return 1;
@@ -112,7 +116,7 @@ namespace NatNet
 
     bool UsingMulticast()
     {
-        return false;
+        return usingMulticast;
     }
 
     void NATNET_CALLCONV messageHandler(Verbosity msgType, const char* msg)
@@ -152,7 +156,7 @@ namespace NatNet
                 float z = data->Skeletons[i].RigidBodyData[j].z;
 
                 NatNetMath::Quaternion rotation = {
-                    data->Skeletons[i].RigidBodyData[j].qz,
+                    data->Skeletons[i].RigidBodyData[j].qx,
                     data->Skeletons[i].RigidBodyData[j].qy,
                     data->Skeletons[i].RigidBodyData[j].qz,
                     data->Skeletons[i].RigidBodyData[j].qw
@@ -164,14 +168,13 @@ namespace NatNet
                     NatNetMath::ConvertRHSRotZUpToYUp(rotation.x, rotation.y, rotation.z, rotation.w);
                 }
 
-                NatNetMath::EulerAngles rotationEuler = NatNetMath::Eul_FromQuat(rotation);
-
                 NatNet::RigidBody rigidBody = {
                     x, y, z,
 
-                    rotationEuler.x * (180.0f / MATH_PI),
-                    rotationEuler.y * (180.0f / MATH_PI),
-                    rotationEuler.z * (180.0f / MATH_PI),
+                    rotation.x,
+                    rotation.y,
+                    rotation.z,
+                    rotation.w,
 
                     data->Skeletons[i].RigidBodyData[j].ID
                 };
