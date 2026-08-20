@@ -35,7 +35,7 @@ limitations under the License. */
 #include "NatNetClient.h"
 #include "natutils.h"
 
-#include "GLPrint.h"
+#include "UI.h"
 #include "RigidBodyCollection.h"
 #include "MarkerPositionCollection.h"
 #include "OpenGLDrawingFunctions.h"
