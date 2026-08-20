@@ -66,7 +66,3 @@ void OptiTrackTrackerDeviceProvider::Cleanup()
 
 	ExitApplicationThread();
 }
-
-void OptiTrackTrackerDeviceProvider::SetPlayspaceOffset(Eigen::Vector3<float> position, Eigen::Quaternion<float> rotation) {
-	//TODO;
-}

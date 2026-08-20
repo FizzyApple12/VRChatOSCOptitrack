@@ -11,6 +11,7 @@
 #include "openvr/headers/openvr_driver.h"
 #include <atomic>
 #include <thread>
+#include <Eigen/Eigen>
 
 class OptiTrackTrackerDeviceDriver : public vr::ITrackedDeviceServerDriver
 {
@@ -32,7 +33,7 @@ public:
 
 	// other implementations
 
-	void UpdateOptiTrackPose(NatNet::RigidBody rigidbody);
+	void UpdateOptiTrackPose(NatNet::RigidBody rigidbody, Eigen::Affine3f motiveStageTransform);
 
 	unsigned int trackerIndex;
 	std::atomic<bool> isActive;

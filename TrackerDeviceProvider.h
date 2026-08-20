@@ -26,8 +26,6 @@ public:
 
 	// other implementations
 
-	void SetPlayspaceOffset(Eigen::Vector3<float> position, Eigen::Quaternion<float> rotation);
-
 	std::vector<std::unique_ptr<OptiTrackTrackerDeviceDriver>> optiTrackTrackerDevices;
 };
 
