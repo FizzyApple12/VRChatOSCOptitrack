@@ -15,17 +15,22 @@ namespace NatNet
 {
 	typedef struct
 	{
-		std::tuple<float, float, float> position;
-		std::tuple<float, float, float> rotation;
+		float x;
+		float y;
+		float z;
+
+		float rx;
+		float ry;
+		float rz;
 
 		int id;
-
-		std::string name;
 	} RigidBody;
 
 	typedef struct
 	{
-		std::tuple<float, float, float> position;
+		float x;
+		float y;
+		float z;
 
 		int id;
 	} Marker;

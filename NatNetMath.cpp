@@ -12,122 +12,55 @@
 
 namespace NatNetMath
 {
-    EulerAngles Eul_(float ai, float aj, float ah, int order)
+
+    float NormalizeAngle(float angle)
     {
-        EulerAngles ea;
-        ea.x = ai; ea.y = aj; ea.z = ah;
-        ea.w = order;
-        return (ea);
+        float modAngle = fmodf(angle, 360.0f);
+
+        if (modAngle < 0.0f)
+            return modAngle + 360.0f;
+        else
+            return modAngle;
     }
 
-    /* Construct quaternion from Euler angles (in radians). */
-    Quaternion Eul_ToQuat(EulerAngles ea)
+    EulerAngles NormalizeAngles(EulerAngles angles)
     {
-        Quaternion qu;
-        double a[3], ti, tj, th, ci, cj, ch, si, sj, sh, cc, cs, sc, ss;
-        int i, j, k, h, n, s, f;
-        EulGetOrd(ea.w, i, j, k, h, n, s, f);
-        if (f == EulFrmR) { float t = ea.x; ea.x = ea.z; ea.z = t; }
-        if (n == EulParOdd) ea.y = -ea.y;
-        ti = ea.x * 0.5; tj = ea.y * 0.5; th = ea.z * 0.5;
-        ci = cos(ti);  cj = cos(tj);  ch = cos(th);
-        si = sin(ti);  sj = sin(tj);  sh = sin(th);
-        cc = ci * ch; cs = ci * sh; sc = si * ch; ss = si * sh;
-        if (s == EulRepYes) {
-            a[i] = cj * (cs + sc);	/* Could speed up with */
-            a[j] = sj * (cc + ss);	/* trig identities. */
-            a[k] = sj * (cs - sc);
-            qu.w = cj * (cc - ss);
-        }
-        else {
-            a[i] = cj * sc - sj * cs;
-            a[j] = cj * ss + sj * cc;
-            a[k] = cj * cs - sj * sc;
-            qu.w = cj * cc + sj * ss;
-        }
-        if (n == EulParOdd) a[j] = -a[j];
-        qu.x = a[X]; qu.y = a[Y]; qu.z = a[Z];
-        return (qu);
-    }
-
-    /* Construct matrix from Euler angles (in radians). */
-    void Eul_ToHMatrix(EulerAngles ea, HMatrix M)
-    {
-        double ti, tj, th, ci, cj, ch, si, sj, sh, cc, cs, sc, ss;
-        int i, j, k, h, n, s, f;
-        EulGetOrd(ea.w, i, j, k, h, n, s, f);
-        if (f == EulFrmR) { float t = ea.x; ea.x = ea.z; ea.z = t; }
-        if (n == EulParOdd) { ea.x = -ea.x; ea.y = -ea.y; ea.z = -ea.z; }
-        ti = ea.x;	  tj = ea.y;	th = ea.z;
-        ci = cos(ti); cj = cos(tj); ch = cos(th);
-        si = sin(ti); sj = sin(tj); sh = sin(th);
-        cc = ci * ch; cs = ci * sh; sc = si * ch; ss = si * sh;
-        if (s == EulRepYes) {
-            M[i][i] = cj;	  M[i][j] = sj * si;    M[i][k] = sj * ci;
-            M[j][i] = sj * sh;  M[j][j] = -cj * ss + cc; M[j][k] = -cj * cs - sc;
-            M[k][i] = -sj * ch; M[k][j] = cj * sc + cs; M[k][k] = cj * cc - ss;
-        }
-        else {
-            M[i][i] = cj * ch; M[i][j] = sj * sc - cs; M[i][k] = sj * cc + ss;
-            M[j][i] = cj * sh; M[j][j] = sj * ss + cc; M[j][k] = sj * cs - sc;
-            M[k][i] = -sj;	 M[k][j] = cj * si;    M[k][k] = cj * ci;
-        }
-        M[W][X] = M[W][Y] = M[W][Z] = M[X][W] = M[Y][W] = M[Z][W] = 0.0; M[W][W] = 1.0;
-    }
-
-    /* Convert matrix to Euler angles (in radians). */
-    EulerAngles Eul_FromHMatrix(HMatrix M, int order)
-    {
-        EulerAngles ea;
-        int i, j, k, h, n, s, f;
-        EulGetOrd(order, i, j, k, h, n, s, f);
-        if (s == EulRepYes) {
-            double sy = sqrt(M[i][j] * M[i][j] + M[i][k] * M[i][k]);
-            if (sy > 16 * FLT_EPSILON) {
-                ea.x = atan2((double)M[i][j], (double)M[i][k]);
-                ea.y = atan2(sy, (double)M[i][i]);
-                ea.z = atan2(M[j][i], -M[k][i]);
-            }
-            else {
-                ea.x = atan2(-M[j][k], M[j][j]);
-                ea.y = atan2(sy, (double)M[i][i]);
-                ea.z = 0;
-            }
-        }
-        else {
-            double cy = sqrt(M[i][i] * M[i][i] + M[j][i] * M[j][i]);
-            if (cy > 16 * FLT_EPSILON) {
-                ea.x = atan2(M[k][j], M[k][k]);
-                ea.y = atan2((double)-M[k][i], cy);
-                ea.z = atan2(M[j][i], M[i][i]);
-            }
-            else {
-                ea.x = atan2(-M[j][k], M[j][j]);
-                ea.y = atan2((double)-M[k][i], cy);
-                ea.z = 0;
-            }
-        }
-        if (n == EulParOdd) { ea.x = -ea.x; ea.y = -ea.y; ea.z = -ea.z; }
-        if (f == EulFrmR) { float t = ea.x; ea.x = ea.z; ea.z = t; }
-        ea.w = order;
-        return (ea);
+        angles.x = NormalizeAngle(angles.x * (180.0 / MATH_PI));
+        angles.y = NormalizeAngle(angles.y * (180.0 / MATH_PI));
+        angles.z = NormalizeAngle(angles.z * (180.0 / MATH_PI));
+        return angles;
     }
 
     /* Convert quaternion to Euler angles (in radians). */
-    EulerAngles Eul_FromQuat(Quaternion q, int order)
+    EulerAngles Eul_FromQuat(Quaternion rotation)
     {
-        HMatrix M;
-        double Nq = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
-        double s = (Nq > 0.0) ? (2.0 / Nq) : 0.0;
-        double xs = q.x * s, ys = q.y * s, zs = q.z * s;
-        double wx = q.w * xs, wy = q.w * ys, wz = q.w * zs;
-        double xx = q.x * xs, xy = q.x * ys, xz = q.x * zs;
-        double yy = q.y * ys, yz = q.y * zs, zz = q.z * zs;
-        M[X][X] = 1.0 - (yy + zz); M[X][Y] = xy - wz; M[X][Z] = xz + wy;
-        M[Y][X] = xy + wz; M[Y][Y] = 1.0 - (xx + zz); M[Y][Z] = yz - wx;
-        M[Z][X] = xz - wy; M[Z][Y] = yz + wx; M[Z][Z] = 1.0 - (xx + yy);
-        M[W][X] = M[W][Y] = M[W][Z] = M[X][W] = M[Y][W] = M[Z][W] = 0.0; M[W][W] = 1.0;
-        return (Eul_FromHMatrix(M, order));
+        float sqw = rotation.w * rotation.w;
+        float sqx = rotation.x * rotation.x;
+        float sqy = rotation.y * rotation.y;
+        float sqz = rotation.z * rotation.z;
+        float unit = sqx + sqy + sqz + sqw; // if normalised is one, otherwise is correction factor
+        float test = rotation.x * rotation.w - rotation.y * rotation.z;
+        EulerAngles v;
+
+        if (test > 0.4995f * unit)
+        { // singularity at north pole
+            v.y = 2.0 * atan2(rotation.y, rotation.x);
+            v.x = MATH_PI / 2;
+            v.z = 0;
+            return NormalizeAngles(v);
+        }
+        if (test < -0.4995f * unit)
+        { // singularity at south pole
+            v.y = -2.0 * atan2(rotation.y, rotation.x);
+            v.x = -MATH_PI / 2;
+            v.z = 0;
+            return NormalizeAngles(v);
+        }
+        Quaternion q = rotation;
+        v.y = (float)atan2(2.0 * q.x * q.w + 2.0 * q.y * q.z, 1 - 2.0 * (q.z * q.z + q.w * q.w));     // Yaw
+        v.x = (float)asin(2.0 * (q.x * q.z - q.w * q.y));                             // Pitch
+        v.z = (float)atan2(2.0 * q.x * q.y + 2.0 * q.z * q.w, 1 - 2.0 * (q.y * q.y + q.z * q.z));      // Roll
+        return NormalizeAngles(v);
     }
 
     void ConvertRHSPosZupToYUp(float& x, float& y, float& z)

@@ -33,11 +33,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
     {
         UI::RenderEnvironment();
 
-        for (int i = 0; i < NatNetMarkerCollection::GetCount(); i++)
-        {
-            UI::RenderMarker(NatNetMarkerCollection::Get(i));
-        }
-
         for (int i = 0; i < NatNetRigidBodyCollection::GetCount(); i++)
         {
             NatNet::RigidBody activeRigidBody = NatNetRigidBodyCollection::Get(i);
@@ -50,18 +45,18 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
             {
                 if (activeRigidBody.id == oscOptiTrackIds[i])
                 {
-                    float x, y, z;
-                    std::tie(x, y, z) = activeRigidBody.position;
+                    VRChatOSC::WritePosition(1, activeRigidBody.x, activeRigidBody.y, activeRigidBody.z);
 
-                    VRChatOSC::WritePosition(1, x, y, z);
-
-                    std::tie(x, y, z) = activeRigidBody.rotation;
-
-                    VRChatOSC::WriteRotation(1, x, -y, -z);
+                    VRChatOSC::WriteRotation(1, activeRigidBody.rx, -activeRigidBody.ry, -activeRigidBody.rz);
                 }
             }
 
             VRChatOSC::SendMessage();
+        }
+
+        for (int i = 0; i < NatNetMarkerCollection::GetCount(); i++)
+        {
+            UI::RenderMarker(NatNetMarkerCollection::Get(i));
         }
 
         UI::RenderUI();

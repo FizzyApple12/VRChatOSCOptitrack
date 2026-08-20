@@ -98,24 +98,11 @@ namespace NatNetMath
 
     typedef Quaternion EulerAngles;
 
-    EulerAngles Eul_(float ai, float aj, float ah, int order);
-
-    /* Construct quaternion from Euler angles (in radians). */
-    Quaternion Eul_ToQuat(EulerAngles ea);
-
-    /* Construct matrix from Euler angles (in radians). */
-    void Eul_ToHMatrix(EulerAngles ea, HMatrix M);
-
-    /* Convert matrix to Euler angles (in radians). */
-    EulerAngles Eul_FromHMatrix(HMatrix M, int order);
-
-    EulerAngles Eul_FromQuat(Quaternion q, int order);
+    EulerAngles Eul_FromQuat(Quaternion rotation);
 
     void ConvertRHSPosZupToYUp(float& x, float& y, float& z);
 
     void ConvertRHSRotZUpToYUp(float& qx, float& qy, float& qz, float& qw);
-
-    EulerAngles quaternionToEulerAngles(double w, double x, double y, double z);
 }
 
 #endif

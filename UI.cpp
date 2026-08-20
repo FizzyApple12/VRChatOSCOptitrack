@@ -21,6 +21,8 @@
 
 #define CLAMP_INT(x, min, max) if (x < min) x = min; if (x > max) x = max;
 
+#define M_PI 3.14159265358979323846
+
 namespace UI
 {
 
@@ -36,9 +38,9 @@ namespace UI
 
     clock_t currentTime;
 
-    int selectedTrackerId = 0;
+    int selectedTrackerId = -1;
 
-    float cameraPositionX = 0, cameraPositionY = -1, cameraPositionZ = -5;
+    float cameraPositionX = 0, cameraPositionY = -1, cameraPositionZ = -4;
     float cameraRotationX = 0, cameraRotationY = 0;
 
     bool enableFlyControl = false;
@@ -78,6 +80,11 @@ namespace UI
 
         wglMakeCurrent(mainDeviceContext, glContext);
 
+        glClearColor(0.05f, 0.05f, 0.05f, 1.00f);
+        glEnable(GL_LIGHT0);
+        glEnable(GL_LIGHTING);
+        glEnable(GL_DEPTH_TEST);
+
         ::ShowWindow(mainWindow, SW_SHOWDEFAULT);
         ::UpdateWindow(mainWindow);
 
@@ -111,8 +118,6 @@ namespace UI
 
     void RenderEnvironment()
     {
-        glViewport(0, 0, width, width);
-        glClearColor(0.05f, 0.05f, 0.05f, 1.00f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         {
@@ -215,12 +220,15 @@ namespace UI
     void RenderMarker(NatNet::Marker marker)
     {
         glPushAttrib(GL_ALL_ATTRIB_BITS);
+        glColor4f(0.8f, 0.8f, 0.8f, 0.8f);
+
         glPushMatrix();
 
-        float x, y, z;
-        std::tie(x, y, z) = marker.position;
+        glRotatef(cameraRotationX, 1, 0, 0);
+        glRotatef(cameraRotationY, 0, 1, 0);
+        glTranslatef(cameraPositionX * 1000, cameraPositionY * 1000, cameraPositionZ * 1000);
 
-        glTranslatef(x * 1000.0f, y * 1000.0f, z * 1000.0f);
+        glTranslatef(marker.x * 1000.0f, marker.y * 1000.0f, marker.z * 1000.0f);
 
         DrawingFunctions::DrawSphere(1, 5.0f);
 
@@ -233,16 +241,15 @@ namespace UI
         glPushAttrib(GL_ALL_ATTRIB_BITS);
         glPushMatrix();
 
-        float x, y, z;
-        std::tie(x, y, z) = rigidBody.position;
+        glRotatef(cameraRotationX, 1, 0, 0);
+        glRotatef(cameraRotationY, 0, 1, 0);
+        glTranslatef(cameraPositionX * 1000, cameraPositionY * 1000, cameraPositionZ * 1000);
 
-        glTranslatef(x * 1000.0f, y * 1000.0f, z * 1000.0f);
+        glRotatef(rigidBody.rz, 0.0f, 0.0f, 1.0f);
+        glRotatef(rigidBody.rx, 1.0f, 0.0f, 0.0f);
+        glRotatef(rigidBody.ry, 0.0f, 1.0f, 0.0f);
 
-        std::tie(x, y, z) = rigidBody.rotation;
-
-        glRotatef(z, 0.0f, 0.0f, 1.0f);
-        glRotatef(x, 1.0f, 0.0f, 0.0f);
-        glRotatef(y, 0.0f, 1.0f, 0.0f);
+        glTranslatef(rigidBody.x * 1000.0f, rigidBody.y * 1000.0f, rigidBody.z * 1000.0f);
 
         bool isActive = false;
 
@@ -283,7 +290,12 @@ namespace UI
         ImGui::SameLine();
 
         if (ImGui::Selectable(label, selectedTrackerId == optitrackId))
-            selectedTrackerId = optitrackId;
+        {
+            if (selectedTrackerId == optitrackId)
+                selectedTrackerId = -1;
+            else
+                selectedTrackerId = optitrackId;
+        }
     }
 
     void RenderUI()
@@ -313,10 +325,32 @@ namespace UI
             SetCursorPos(centerX, centerY);
 
             cameraRotationY += deltaX * lookSensitivity * ((float) deltaTime / (float) CLOCKS_PER_SEC);
-            cameraRotationX += deltaY * lookSensitivity * ((float)deltaTime / (float)CLOCKS_PER_SEC);
+            cameraRotationX += deltaY * lookSensitivity * ((float) deltaTime / (float) CLOCKS_PER_SEC);
 
-            cameraPositionZ += deltaX * lookSensitivity * ((float)deltaTime / (float)CLOCKS_PER_SEC);
-            cameraPositionY += deltaY * lookSensitivity * ((float)deltaTime / (float)CLOCKS_PER_SEC);
+            float forwardSpeed = 0;
+            float sideSpeed = 0;
+
+            if (ImGui::IsKeyDown(ImGui::GetKeyIndex(ImGuiKey_W)))
+                forwardSpeed++;
+            if (ImGui::IsKeyDown(ImGui::GetKeyIndex(ImGuiKey_S)))
+                forwardSpeed--;
+
+            if (ImGui::IsKeyDown(ImGui::GetKeyIndex(ImGuiKey_A)))
+                sideSpeed++;
+            if (ImGui::IsKeyDown(ImGui::GetKeyIndex(ImGuiKey_D)))
+                sideSpeed--;
+
+            cameraPositionX += (
+                (cos(cameraRotationX * (M_PI / 180.0)) * sin(-cameraRotationY * (M_PI / 180.0)) * forwardSpeed) +
+                (cos(-cameraRotationY * (M_PI / 180.0)) * sideSpeed)
+                ) * ((float)deltaTime / (float)CLOCKS_PER_SEC) * moveSensitivity;
+
+            cameraPositionY += sin(cameraRotationX * (M_PI / 180.0)) * forwardSpeed * ((float) deltaTime / (float) CLOCKS_PER_SEC) * moveSensitivity;
+
+            cameraPositionZ += (
+                (cos(cameraRotationX * (M_PI / 180.0)) * cos(-cameraRotationY * (M_PI / 180.0)) * forwardSpeed) +
+                (sin(cameraRotationY * (M_PI / 180.0)) * sideSpeed)
+                ) * ((float) deltaTime / (float) CLOCKS_PER_SEC) * moveSensitivity;
         }
 
         MSG message;
@@ -451,9 +485,9 @@ namespace UI
 
             ImGui::SeparatorText("Detected Trackers");
 
-            ImGui::PushID("TrackerListBox");
-            if (ImGui::BeginListBox(""))
             {
+                ImGui::BeginChild("TrackerListBox", ImVec2(0, ImGui::GetTextLineHeightWithSpacing() * 7.25f + ImGui::GetStyle().FramePadding.y * 2.0f));
+
                 for (int i = 0; i < NatNetRigidBodyCollection::GetCount(); i++)
                 {
                     ImGui::PushID(i);
@@ -461,12 +495,15 @@ namespace UI
                     NatNet::RigidBody activeRigidBody = NatNetRigidBodyCollection::Get(i);
                     char rigidBodyName[1024];
 
-                    static std::string testText = activeRigidBody.name;
-
-                    sprintf(rigidBodyName, "(%03d) %32s", activeRigidBody.id, testText.c_str());
+                    sprintf(rigidBodyName, "(%03d) %-32s", activeRigidBody.id, NatNet::GetMappedName(activeRigidBody.id).c_str());
 
                     if (ImGui::Selectable(rigidBodyName, selectedTrackerId == activeRigidBody.id))
-                        selectedTrackerId = activeRigidBody.id;
+                    {
+                        if (selectedTrackerId == activeRigidBody.id)
+                            selectedTrackerId = -1;
+                        else
+                            selectedTrackerId = activeRigidBody.id;
+                    }
 
                     if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
                     {
@@ -478,9 +515,9 @@ namespace UI
 
                     ImGui::PopID();
                 }
-                ImGui::EndListBox();
+
+                ImGui::EndChild();
             }
-            ImGui::PopID();
         }
 
         ImVec2 setupWindowSize = ImGui::GetWindowSize();
@@ -493,7 +530,7 @@ namespace UI
         {
             if (ImGui::Button("Reset View Point"))
             {
-                cameraPositionX = 0, cameraPositionY = -1, cameraPositionZ = -5;
+                cameraPositionX = 0, cameraPositionY = -1, cameraPositionZ = -4;
                 cameraRotationX = 0, cameraRotationY = 0;
             }
 
@@ -557,24 +594,18 @@ namespace UI
                     width = LOWORD(lParam);
                     height = HIWORD(lParam);
 
-                    if (hWnd != nullptr)
-                    {
-                        wglMakeCurrent(mainDeviceContext, glContext);
+                    wglMakeCurrent(mainDeviceContext, glContext);
 
-                        RECT viewportRect;
-                        GetWindowRect(mainWindow, &viewportRect);
+                    float aspectRatio = ((float) width) / ((float)height);
 
-                        float aspectRatio = ((float)(viewportRect.right - viewportRect.left)) / ((float)(viewportRect.bottom - viewportRect.top));
+                    glMatrixMode(GL_PROJECTION);
 
-                        glMatrixMode(GL_PROJECTION);
+                    glLoadIdentity();
 
-                        glLoadIdentity();
+                    gluPerspective(60.0f, aspectRatio, 1.0f, 10000.0f);
+                    glViewport(0, 0, width, height);
 
-                        gluPerspective(40.0f, aspectRatio, 1.0f, 10000.0f);
-                        glViewport(viewportRect.left, viewportRect.top, viewportRect.right - viewportRect.left, viewportRect.bottom - viewportRect.top);
-
-                        glMatrixMode(GL_MODELVIEW);
-                    }
+                    glMatrixMode(GL_MODELVIEW);
                 }
                 return 0;
             }
