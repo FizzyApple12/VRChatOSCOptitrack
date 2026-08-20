@@ -125,6 +125,11 @@ void NATNET_CALLCONV MessageHandler(Verbosity msgType, const char* msg);      //
 bool InitNatNet(LPSTR szIPAddress, LPSTR szServerIPAddress, ConnectionType connType);
 bool ParseRigidBodyDescription(sDataDescriptions* pDataDefs);
 
+uint64_t currentTimeTag() //maybe needed for OSC??? who knows!
+{
+    return ((time(NULL) + 2208988800) << 32) + 0;
+}
+
 //****************************************************************************
 //
 // Windows Functions 
@@ -487,8 +492,8 @@ void RenderOGLScene()
     bool oscMapped = false;
     int32_t activeId = -1;
     uint64_t timetag;
-    char posAddress[29];
-    char rotAddress[29];
+    char posAddress[32];
+    char rotAddress[32];
 
     for (size_t i = 0; i < rigidBodies.Count(); i++)
     {
@@ -555,9 +560,7 @@ void RenderOGLScene()
 
         tosc_bundle bundle;
 
-        timetag = tosc_getTimetag(&bundle);
-
-        tosc_writeBundle(&bundle, timetag, buffer, sizeof(buffer));
+        tosc_writeBundle(&bundle, 0, buffer, sizeof(buffer));
 
         for (int j = 0; j < 8; j++)
         {
