@@ -5,6 +5,7 @@
 #include "UI.h"
 #include "VRChatOSC.h"
 #include "NatNet.h"
+#include "NatNetCollections.h"
 
 bool running = true;
 
@@ -24,8 +25,7 @@ int oscOptiTrackIds[8] = {
     12, // right elbow
 };
 
-int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-    LPSTR lpCmdLine, int nCmdShow)
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
     UI::CreateUI();
 
@@ -33,33 +33,31 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     {
         UI::RenderEnvironment();
 
-        for (int i = 0; i < NatNet::MarkerCount(); i++)
+        for (int i = 0; i < NatNetMarkerCollection::GetCount(); i++)
         {
-            UI::RenderMarker(NatNet::GetMarker(i));
+            UI::RenderMarker(NatNetMarkerCollection::Get(i));
         }
 
-        for (int i = 0; i < NatNet::RigidBodyCount(); i++)
+        for (int i = 0; i < NatNetRigidBodyCollection::GetCount(); i++)
         {
-            NatNet::RigidBody activeRigidBody = NatNet::GetRigidBody(i);
+            NatNet::RigidBody activeRigidBody = NatNetRigidBodyCollection::Get(i);
 
             UI::RenderRigidBody(activeRigidBody);
-
-            float positionX, positionY, positionZ;
-            std::tie(positionX, positionY, positionZ) = activeRigidBody.position;
-
-            float rotationX, rotationY, rotationZ;
-            std::tie(rotationX, rotationY, rotationZ) = activeRigidBody.rotation;
 
             VRChatOSC::NewMessage();
 
             for (int j = 0; j < 8; j++) 
             {
-                if (activeRigidBody.Id == oscOptiTrackIds[i])
+                if (activeRigidBody.id == oscOptiTrackIds[i])
                 {
-                    NatNet::RigidBody activeRigidBody = NatNet::GetRigidBody(oscOptiTrackIds[i]);
+                    float x, y, z;
+                    std::tie(x, y, z) = activeRigidBody.position;
 
-                    VRChatOSC::WritePosition(1, positionX, positionY, positionZ);
-                    VRChatOSC::WriteRotation(1, rotationX, -rotationY, -rotationZ);
+                    VRChatOSC::WritePosition(1, x, y, z);
+
+                    std::tie(x, y, z) = activeRigidBody.rotation;
+
+                    VRChatOSC::WriteRotation(1, x, -y, -z);
                 }
             }
 

@@ -10,11 +10,14 @@
 #include "imgui/backends/imgui_impl_win32.h"
 
 #include <GL/GL.h>
+#include <GL/glu.h>
 
 #include "main.h"
 #include "VRChatOSC.h"
 #include "NatNet.h"
 #include <stdio.h>
+#include "NatNetCollections.h"
+#include "DrawingFunctions.h"
 
 #define CLAMP_INT(x, min, max) if (x < min) x = min; if (x > max) x = max;
 
@@ -100,6 +103,8 @@ namespace UI
         wglDeleteContext(glContext);
         ::DestroyWindow(mainWindow);
         ::UnregisterClassW(mainWindowClass.lpszClassName, mainWindowClass.hInstance);
+
+        ReleaseDC(mainWindow, mainDeviceContext);
     }
 
     void RenderEnvironment()
@@ -207,11 +212,48 @@ namespace UI
 
     void RenderMarker(NatNet::Marker marker)
     {
+        glPushAttrib(GL_ALL_ATTRIB_BITS);
+        glPushMatrix();
 
+        float x, y, z;
+        std::tie(x, y, z) = marker.position;
+
+        glTranslatef(x * 1000.0f, y * 1000.0f, z * 1000.0f);
+
+        DrawingFunctions::DrawSphere(1, 5.0f);
+
+        glPopMatrix();
+        glPopAttrib();
     }
+
     void RenderRigidBody(NatNet::RigidBody rigidBody)
     {
+        glPushAttrib(GL_ALL_ATTRIB_BITS);
+        glPushMatrix();
 
+        float x, y, z;
+        std::tie(x, y, z) = rigidBody.position;
+
+        glTranslatef(x * 1000.0f, y * 1000.0f, z * 1000.0f);
+
+        std::tie(x, y, z) = rigidBody.rotation;
+
+        glRotatef(z, 0.0f, 0.0f, 1.0f);
+        glRotatef(x, 1.0f, 0.0f, 0.0f);
+        glRotatef(y, 0.0f, 1.0f, 0.0f);
+
+        bool isActive = false;
+
+        for (int i = 0; i < 8; i++)
+        {
+            if (rigidBody.id == getOSCTrackerNumber(i))
+                isActive = true;
+        }
+
+        DrawingFunctions::DrawCube(50.0f, isActive, rigidBody.id == selectedTrackerId);
+
+        glPopMatrix();
+        glPopAttrib();
     }
 
     void createTrackerSelecter(const char* label, int oscId)
@@ -290,8 +332,12 @@ namespace UI
                 }
                 else
                 {
+                    ImGui::PushID("VRChatConnect");
+
                     if (ImGui::Button("Connect"))
                         VRChatOSC::Connect(vrChatIpAddress);
+
+                    ImGui::PopID();
 
                     ImGui::Text("Currently Disconnected");
                 }
@@ -339,8 +385,12 @@ namespace UI
                 }
                 else
                 {
+                    ImGui::PushID("OptiTrackConnect");
+
                     if (ImGui::Button("Connect"))
                         NatNet::Connect(natNetLocalAddress, natNetServerAddress, 1 - selectedCastMode);
+
+                    ImGui::PopID();
 
                     ImGui::Text("Currently Disconnected");
                 }
@@ -373,11 +423,11 @@ namespace UI
             ImGui::PushID("TrackerListBox");
             if (ImGui::BeginListBox(""))
             {
-                for (int i = 0; i < NatNet::RigidBodyCount(); i++)
+                for (int i = 0; i < NatNetRigidBodyCollection::GetCount(); i++)
                 {
                     ImGui::PushID(i);
 
-                    NatNet::RigidBody activeRigidBody = NatNet::GetRigidBody(i);
+                    NatNet::RigidBody activeRigidBody = NatNetRigidBodyCollection::Get(i);
                     char rigidBodyName[64];
 
                     sprintf(rigidBodyName, "(%03d) %s", activeRigidBody.id, activeRigidBody.name);
@@ -455,6 +505,25 @@ namespace UI
                 {
                     width = LOWORD(lParam);
                     height = HIWORD(lParam);
+
+                    if (hWnd != nullptr)
+                    {
+                        wglMakeCurrent(mainDeviceContext, glContext);
+
+                        RECT viewportRect;
+                        GetClientRect(mainWindow, &viewportRect);
+
+                        float aspectRatio = ((float)(viewportRect.right - viewportRect.left)) / ((float)(viewportRect.bottom - viewportRect.top));
+
+                        glMatrixMode(GL_PROJECTION);
+
+                        glLoadIdentity();
+
+                        gluPerspective(40.0f, aspectRatio, 1.0f, 10000.0f);
+                        glViewport(viewportRect.left, viewportRect.top, viewportRect.right - viewportRect.left, viewportRect.bottom - viewportRect.top);
+
+                        glMatrixMode(GL_MODELVIEW);
+                    }
                 }
                 return 0;
             }
