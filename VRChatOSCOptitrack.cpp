@@ -87,6 +87,12 @@ int upAxis = 1; //
 // NatNet server IP address.
 int IPAddress[4] = { 127, 0, 0, 1 };
 
+int VRChatAddress[4] = { 192, 168, 1, 122 };
+char formattedAddress[32];
+
+int vrchatSocket = -1;
+struct sockaddr_in vrchatSocketServer;
+
 // Timecode string 
 char szTimecode[128] = "";
 
@@ -109,6 +115,8 @@ int32_t oscIds[8] = {
     8,  // left elbow
     12, // right elbow
 };
+
+int32_t oscHead = 5;
 
 
 // functions
@@ -233,6 +241,30 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
     // schedule to render on UI thread every 30 milliseconds
     UINT renderTimer = SetTimer(hWnd, ID_RENDERTIMER, 30, NULL);
+
+    WSADATA Data; // Windows :(
+    WSAStartup(0x202, &Data);
+
+    if ((vrchatSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+    {
+        printf("epic socket fail lmao, press any key to continue");
+	    getchar();
+        exit(1);
+    }
+
+    sprintf(formattedAddress, "%d.%d.%d.%d", VRChatAddress[0], VRChatAddress[1], VRChatAddress[2], VRChatAddress[3]);
+ 
+    memset(&vrchatSocketServer, 0, sizeof(vrchatSocketServer));
+    vrchatSocketServer.sin_family = AF_INET;
+    vrchatSocketServer.sin_port = htons(9000);
+    vrchatSocketServer.sin_addr.s_addr = inet_addr(formattedAddress);
+
+    if (connect(vrchatSocket, (struct sockaddr *) &vrchatSocketServer, sizeof(vrchatSocketServer)) == SOCKET_ERROR)
+    {
+        printf("epic connect fail lmao, press any key to continue");
+	    getchar();
+        exit(2);
+    }
 
     return true;
 }
@@ -426,6 +458,28 @@ void ConvertRHSRotZUpToYUp(float& qx, float& qy, float& qz, float& qw)
     qw = qwNew;
 }
 
+EulerAngles quaternionToEulerAngles(double w, double x, double y, double z) {
+	// Calculate roll (x-axis rotation)
+	double sinr_cosp = 2 * (w * x + y * z);
+	double cosr_cosp = 1 - 2 * (x * x + y * y);
+	double roll = std::atan2(sinr_cosp, cosr_cosp);
+
+	// Calculate pitch (y-axis rotation)
+	double sinp = 2 * (w * y - z * x);
+	double pitch;
+	if (std::abs(sinp) >= 1)
+		pitch = std::copysign(3.1415926535 / 2, sinp); // Use 90 degrees if out of range
+	else
+		pitch = std::asin(sinp);
+
+	// Calculate yaw (z-axis rotation)
+	double siny_cosp = 2 * (w * z + x * y);
+	double cosy_cosp = 1 - 2 * (y * y + z * z);
+	double yaw = std::atan2(siny_cosp, cosy_cosp);
+
+	return EulerAngles({ (float) roll, (float) pitch, (float) yaw, 0 });
+}
+
 // Render OpenGL scene
 void RenderOGLScene()
 {
@@ -500,7 +554,7 @@ void RenderOGLScene()
         // RigidBody position
         std::tie(x, y, z) = rigidBodies.GetCoordinates(i);
         // convert to millimeters
-        rawx = x;
+        rawx = -x;
         rawy = y;
         rawz = z;
 
@@ -510,10 +564,10 @@ void RenderOGLScene()
 
         // RigidBody orientation
         std::tie(qx, qy, qz, qw) = rigidBodies.GetQuaternion(i);
-        q.x = qx;
+        q.x = qz;
         q.y = qy;
-        q.z = qz;
-        q.w = qw;
+        q.z = qx;
+        q.w = -qw;
 
         // If Motive is streaming Z-up, convert to this renderer's Y-up coordinate system
         if (upAxis==2)
@@ -526,7 +580,7 @@ void RenderOGLScene()
 
         // Convert Motive quaternion output to euler angles
         // Motive coordinate conventions : X(Pitch), Y(Yaw), Z(Roll), Relative, RHS
-        order = EulOrdXYZr;
+        order = EulOrdZYXr;
         ea = Eul_FromQuat(q, order);
 
         ea.x = NATUtils::RadiansToDegrees(ea.x);
@@ -562,6 +616,8 @@ void RenderOGLScene()
 
         tosc_writeBundle(&bundle, 0, buffer, sizeof(buffer));
 
+	   EulerAngles niceEulerAngles = quaternionToEulerAngles(q.w, q.x, q.y, q.z);
+
         for (int j = 0; j < 8; j++)
         {
             if (activeId == oscIds[j])
@@ -573,11 +629,12 @@ void RenderOGLScene()
 
                 tosc_writeNextMessage(&bundle, posAddress, "fff", rawx, rawy, rawz);
 
-                tosc_writeNextMessage(&bundle, rotAddress, "fff", ea.z, ea.x, ea.y);
+                //tosc_writeNextMessage(&bundle, rotAddress, "fff", ea.x, ea.y, ea.z);
+			 tosc_writeNextMessage(&bundle, rotAddress, "fff", NATUtils::RadiansToDegrees(niceEulerAngles.x), NATUtils::RadiansToDegrees(niceEulerAngles.y), NATUtils::RadiansToDegrees(niceEulerAngles.z));
             }
         }
 
-        send(9000, buffer, tosc_getBundleLength(&bundle), 0);
+        send(vrchatSocket, buffer, tosc_getBundleLength(&bundle), 0);
 
         OpenGLDrawingFunctions::DrawCube(50.0f, oscMapped);
         glPopMatrix();
