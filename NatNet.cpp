@@ -1,4 +1,4 @@
-#include "VRChatOSC.h"
+#include "NatNet.h"
 
 #include <windows.h>
 #include <winsock.h>
@@ -71,6 +71,9 @@ namespace NatNet
 
     void Disconnect()
     {
+        if (!connected)
+            return;
+
         connected = false;
     }
 
@@ -92,5 +95,27 @@ namespace NatNet
     bool UsingMulticast()
     {
         return false;
+    }
+
+    int RigidBodyCount()
+    {
+        return 0;
+    }
+    RigidBody GetRigidBody(int index)
+    {
+        return {
+
+        };
+    }
+
+    int MarkerCount()
+    {
+        return 0;
+    }
+    Marker GetMarker(int index)
+    {
+        return {
+
+        };
     }
 }

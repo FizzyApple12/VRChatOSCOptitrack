@@ -14,6 +14,7 @@
 #include "main.h"
 #include "VRChatOSC.h"
 #include "NatNet.h"
+#include <stdio.h>
 
 #define CLAMP_INT(x, min, max) if (x < min) x = min; if (x > max) x = max;
 
@@ -31,6 +32,11 @@ namespace UI
     int height;
 
     clock_t currentTime;
+
+    int selectedTrackerId = 0;
+
+    float cameraPositionX = 0, cameraPositionY = -1, cameraPositionZ = -5;
+    float cameraRotationX = 0, cameraRotationY = 0;
 
     bool CreateUI()
     {
@@ -72,7 +78,7 @@ namespace UI
 
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO(); (void) io;
+        ImGuiIO& io = ImGui::GetIO(); (void)io;
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
@@ -96,6 +102,146 @@ namespace UI
         ::UnregisterClassW(mainWindowClass.lpszClassName, mainWindowClass.hInstance);
     }
 
+    void RenderEnvironment()
+    {
+        glViewport(0, 0, width, width);
+        glClearColor(0.05f, 0.05f, 0.05f, 1.00f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        {
+            glLoadIdentity();
+
+            GLfloat glfLightPos[] = { -4.0f, 4.0f, 4.0f, 0.0f };
+            GLfloat glfLightAmb[] = { .3f, .3f, .3f, 1.0f };
+
+            glLightfv(GL_LIGHT0, GL_AMBIENT, glfLightAmb);
+            glLightfv(GL_LIGHT1, GL_POSITION, glfLightPos);
+
+            glEnable(GL_COLOR_MATERIAL);
+
+            glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+
+            glPushMatrix();
+        }
+
+        {
+            glTranslatef(cameraPositionX * 1000, cameraPositionY * 1000, cameraPositionZ * 1000);
+            glRotatef(cameraRotationY, 0, 1, 0);
+            glRotatef(cameraRotationX, 1, 0, 0);
+        }
+
+        {
+            glLineWidth(3.0f);
+            glBegin(GL_LINES);
+
+            glColor3f(.8f, 0.0f, 0.0f);
+            glVertex3f(0, 0, 0);
+            glVertex3f(300, 0, 0);
+
+            glColor3f(0.0f, .8f, 0.0f);
+            glVertex3f(0, 0, 0);
+            glVertex3f(0, 300, 0);
+
+            glColor3f(0.0f, 0.0f, .8f);
+            glVertex3f(0, 0, 0);
+            glVertex3f(0, 0, 300);
+
+            glEnd();
+        }
+
+        {
+            glLineWidth(1.0f);
+
+            glPushAttrib(GL_ALL_ATTRIB_BITS);
+            glPushMatrix();
+
+            float halfSize = 2000.0f;      // world is in mms - set to 2 cubic meters
+            float step = 100.0f;           // line every .1 meter
+            float major = 200.0f;          // major every .2 meters
+            float yloc = 0.0f;
+
+            glEnable(GL_LINE_STIPPLE);
+            glLineWidth(0.25);
+            glDepthMask(true);
+            glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GL_ALWAYS);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+            glEnable(GL_COLOR_MATERIAL);
+
+            float r, g, b, a;
+            r = g = b = a = 0.7f;
+
+            for (float x = -halfSize; x <= halfSize; x += step)
+            {
+                if ((x == 0) || (x == -halfSize) || (x == halfSize))         // edge or center line
+                {
+                    glColor4f(.76f * r, .76f * g, .76f * b, .76f * a);
+                }
+                else
+                {
+                    float ff = fmod(x, major);
+                    if (ff == 0.0f)                                        // major line
+                    {
+                        glColor4f(.55f * r, 0.55f * g, 0.55f * b, 0.55f * a);
+                    }
+                    else                                                // minor line
+                    {
+                        glColor4f(0.3f * r, 0.3f * g, 0.3f * b, 0.3f * a);
+                    }
+                }
+
+                glBegin(GL_LINES);
+                glVertex3f(x, 0, halfSize);	    // vertical
+                glVertex3f(x, 0, -halfSize);
+                glVertex3f(halfSize, 0, x);     // horizontal
+                glVertex3f(-halfSize, 0, x);
+                glEnd();
+
+            }
+
+            glPopAttrib();
+            glPopMatrix();
+        }
+    }
+
+    void RenderMarker(NatNet::Marker marker)
+    {
+
+    }
+    void RenderRigidBody(NatNet::RigidBody rigidBody)
+    {
+
+    }
+
+    void createTrackerSelecter(const char* label, int oscId)
+    {
+        int optitrackId = getOSCTrackerNumber(oscId);
+
+        ImGui::PushID("intinput", label);
+
+        if (ImGui::InputInt("", &optitrackId))
+        {
+            setOSCTrackerNumber(oscId, optitrackId);
+            selectedTrackerId = optitrackId;
+        }
+
+        if (ImGui::BeginDragDropTarget())
+        {
+            if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("TRACKER_ID"))
+                setOSCTrackerNumber(oscId, *(const int*) payload->Data);
+
+            ImGui::EndDragDropTarget();
+        }
+
+        ImGui::PopID();
+
+        ImGui::SameLine();
+
+        if (ImGui::Selectable(label, selectedTrackerId == optitrackId))
+            selectedTrackerId = optitrackId;
+    }
+
     void RenderUI()
     {
         currentTime = clock();
@@ -113,11 +259,8 @@ namespace UI
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        //ImGui::ShowDemoWindow();
-
-        //ImGui::BeginMainMenuBar();
-
         ImGui::SetNextWindowPos({ 0, 0 });
+        ImGui::SetNextWindowCollapsed(false, ImGuiCond_Once);
         if (ImGui::Begin("Configuration", NULL, ImGuiWindowFlags_AlwaysAutoResize))
         {
             {// VRChat OSC UI Code
@@ -143,9 +286,7 @@ namespace UI
                     if (ImGui::Button("Disconnect"))
                         VRChatOSC::Disconnect();
 
-                    ImGui::Text("Currently Connected to:");
-                    ImGui::SameLine();
-                    ImGui::Text(VRChatOSC::GetAddress());
+                    ImGui::Text("Currently Connected to: %s", VRChatOSC::GetAddress());
                 }
                 else
                 {
@@ -192,21 +333,9 @@ namespace UI
                         NatNet::Disconnect();
 
                     ImGui::Text("Currently Connected to:");
-
-                    ImGui::Text("Local:");
-                    ImGui::SameLine();
-                    ImGui::Text(NatNet::GetLocalAddress());
-
-                    ImGui::Text("Server:");
-                    ImGui::SameLine();
-                    ImGui::Text(NatNet::GetServerAddress());
-
-                    ImGui::Text("Connection Type:");
-                    ImGui::SameLine();
-                    if (NatNet::UsingMulticast())
-                        ImGui::Text("Multicast");
-                    else
-                        ImGui::Text("Unicast");
+                    ImGui::Text("Local: %s", NatNet::GetLocalAddress());
+                    ImGui::Text("Server: %s", NatNet::GetServerAddress());
+                    ImGui::Text("Connection Type: %s", NatNet::UsingMulticast() ? "Multicast" : "Unicast");
                 }
                 else
                 {
@@ -221,19 +350,60 @@ namespace UI
 
         ImGui::End();
 
-        /*ImGui::SetCursorPosX(ImGui::GetCursorPosX() + configWindowSize.x);
+        ImGui::SetNextWindowPos({ 0, configWindowSize.y });
+        ImGui::SetNextWindowCollapsed(true, ImGuiCond_Once);
+        if (ImGui::Begin("Tracking Setup", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            createTrackerSelecter("Head", 0);
 
-        if (ImGui::BeginMenu("Tracking Info")) {
+            createTrackerSelecter("Hips", 1);
+            createTrackerSelecter("Chest", 2);
 
-            ImGui::EndMenu();
+            createTrackerSelecter("Left Foot", 3);
+            createTrackerSelecter("Right Foot", 4);
+
+            createTrackerSelecter("Left Knee", 5);
+            createTrackerSelecter("Right Knee", 6);
+
+            createTrackerSelecter("Left Elbow", 7);
+            createTrackerSelecter("Right Elbow", 8);
+
+            ImGui::SeparatorText("Detected Trackers");
+
+            ImGui::PushID("TrackerListBox");
+            if (ImGui::BeginListBox(""))
+            {
+                for (int i = 0; i < NatNet::RigidBodyCount(); i++)
+                {
+                    ImGui::PushID(i);
+
+                    NatNet::RigidBody activeRigidBody = NatNet::GetRigidBody(i);
+                    char rigidBodyName[64];
+
+                    sprintf(rigidBodyName, "(%03d) %s", activeRigidBody.id, activeRigidBody.name);
+
+                    if (ImGui::Selectable(rigidBodyName, selectedTrackerId == activeRigidBody.id))
+                        selectedTrackerId = activeRigidBody.id;
+
+                    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+                    {
+                        ImGui::SetDragDropPayload("TRACKER_ID", &activeRigidBody.id, sizeof(int));
+
+                        ImGui::Text(rigidBodyName);
+                        ImGui::EndDragDropSource();
+                    }
+
+                    ImGui::PopID();
+                }
+                ImGui::EndListBox();
+            }
+            ImGui::PopID();
         }
 
-        ImGui::EndMainMenuBar();*/
+        ImGui::End();
 
         ImGui::Render();
-        glViewport(0, 0, width, width);
-        glClearColor(0.05f, 0.05f, 0.05f, 1.00f);
-        glClear(GL_COLOR_BUFFER_BIT);
+
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         ::SwapBuffers(mainDeviceContext);

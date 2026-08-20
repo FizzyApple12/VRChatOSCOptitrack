@@ -9,14 +9,19 @@
 
 #include <windows.h>
 
+#include "NatNet.h"
+
 namespace UI
 {
 	bool CreateUI();
 	void DestroyUI();
 
-
-	//void RenderEnvironment();
+	void RenderEnvironment();
+	void RenderMarker(NatNet::Marker marker);
+	void RenderRigidBody(NatNet::RigidBody rigidBody);
 	void RenderUI();
+
+	void createTrackerSelecter(const char* label, int oscId);
 	
 	bool createDevice(HWND window, HDC* deviceContext);
 	void cleanupDevice(HWND window, HDC deviceContext);
