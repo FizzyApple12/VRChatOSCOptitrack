@@ -1,5 +1,7 @@
 # VRChat OSC Optitrack
 
+## This branch uses OSC tracking, it's better if you need to drive standalone headsets or want to use a single computer for sending OSC data. For better tracking stability and better VR environment integration, I recommend using the [steamvr](https://github.com/FizzyApple12/VRChatOSCOptitrack/tree/steamvr) branch that creates a full SteamVR playspace and trackers.
+
 This program allows you to take tracker data from OptiTrack Motive and send it to VRChat's OSC Tracker endpoint.
 
 Note: This program is very primitive and needs some work to get correct. Most notably: there is no playspace calibration. To calibrate the playspaces between the Headset and the OptiTrack System, you should use the headset recenter button to move the headset playspace until the skeleton visually lines up with your body in game. Make sure to avoid using tools like Playspace Drag to prevent the playspaces from becoming misaligned.
