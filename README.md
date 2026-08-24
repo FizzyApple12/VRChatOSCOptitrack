@@ -1,5 +1,7 @@
 # VRChat OSC Optitrack
 
+## This branch uses a SteamVR driver, it's better for retaining tracking stability and has better VR environment integration. If you need to drive standalone headsets or want to use a single computer for sending OSC data, I recommend using the [main](https://github.com/FizzyApple12/VRChatOSCOptitrack/tree/main) branch that uses VRChat's OSC tracker endpoints.
+
 This program allows you to take tracker data from OptiTrack Motive and send it to SteamVR as Trackers.
 
 ## Usage
